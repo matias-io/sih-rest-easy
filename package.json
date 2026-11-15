@@ -6,7 +6,7 @@
   "main": "desktop/main.js",
   "scripts": {
     "web": "node desktop/serve.js",
-    "desktop": "electron .",
+    "desktop": "node desktop/launch.js",
     "deploy": "wrangler deploy"
   },
   "devDependencies": {

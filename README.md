@@ -22,13 +22,15 @@ Everything lives in `web/`. The desktop version is a thin Electron shell (`deskt
 | | Web (Chrome) | Desktop (Electron) |
 |---|---|---|
 | Run | `npm run web` | `npm run desktop` |
-| Backdrop | a picture of your screen, a live window or tab, or the built-in desktop | your real desktop, live |
+| Backdrop | a picture of your screen, a live window or tab, or the built-in desktop | Windows: live desktop; Mac: desktop snapshot taken at Start |
 | Your real apps stay usable | no | yes: clicks and typing pass through |
 | Stop | End button or Esc | End button, Ctrl+Alt+X or F9 (Ctrl+Shift+Q quits) |
 
-A browser will not let a page draw over your desktop or pass clicks through, which is why the desktop version exists. Its window is excluded from screen capture, so it can show the live screen back, distorted, without showing itself.
+A browser will not let a page draw over your desktop or pass clicks through, which is why the desktop version exists. Windows excludes the overlay from screen capture. Modern macOS includes protected windows in capture, so the Mac app briefly hides itself and takes a snapshot at Start to prevent recursive feedback. While sober, the overlay is transparent and the real desktop shows through. Press Cmd+Shift+Space on Mac (Ctrl+Shift+Space on Windows) to toggle rest while using other apps; Space still works during setup.
 
 ## Run
+
+Use Node 24 LTS (`nvm use` reads `.nvmrc`). Node 26 can silently leave Electron's download only partly extracted.
 
 ```
 npm install
@@ -36,6 +38,8 @@ npm run web       # http://127.0.0.1:8770
 npm run desktop   # the overlay on your real desktop
 npm run deploy    # Cloudflare (sih.matiass.ca)
 ```
+
+With pnpm, run `pnpm install`; Electron's required installer is enabled in `pnpm-workspace.yaml`. For an existing incomplete installation, use Node 24 and run `pnpm rebuild electron`. The desktop launcher also clears inherited `ELECTRON_RUN_AS_NODE` from IDE terminals.
 
 Speed is set on the setup screen (7 to 35 seconds from sober to gone) or with `?rise=20`. Rehearsal switches (web): `?level=0.8` starts drunk, `?cam=0` skips the camera (hold Space to close your eyes), `]` adds drunkenness. `REST_EASY_VISIBLE=1 npm run desktop` lets screenshots see the overlay (it will also see itself).
 

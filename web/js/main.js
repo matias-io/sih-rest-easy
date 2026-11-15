@@ -14,12 +14,13 @@ const mascot = createMascotEyes();
 const show = (id) => { for (const s of ['intro', 'setup', 'stage', 'end']) $(s).hidden = s !== id; mascot.blink(false); mascot.refresh(); };
 const fmt = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 
-let eyes = keyboardEyes(), share = null, running = false, stopRun = null;
+let eyes = keyboardEyes(), share = null, running = false, stopRun = null, desktopRestKey = null;
 
 // The desktop app (Electron) loads this same page with ?desktop=1 and a small bridge.
 // There the stage is a click-through window over the real desktop, showing it live.
 const desktop = new URLSearchParams(location.search).has('desktop') ? window.restEasyDesktop : null;
-if (desktop) { document.body.classList.add('desktop'); desktop.onStop(() => (stopRun ? stopRun() : desktop.quit())); }
+if (desktop) { document.documentElement.classList.add('desktop'); document.body.classList.add('desktop'); desktop.onStop(() => (stopRun ? stopRun() : desktop.quit())); }
+desktop?.onRest((closed) => eyes.force(closed));
 
 // ---------- setup ----------
 function check(key, cls, text) {
@@ -35,7 +36,7 @@ async function setup() {
   check('browser', document.fullscreenEnabled ? 'ok' : 'bad', `${brand} on ${navigator.userAgentData?.platform || navigator.platform}`);
   check('display', 'ok', `${screen.width}×${screen.height} at ${devicePixelRatio}x`);
   check('browser', document.fullscreenEnabled ? 'ok' : 'bad', desktop ? `Desktop app (Electron ${(/Electron\/([\d.]+)/.exec(navigator.userAgent) || [])[1] || ''}, Chromium ${(/Chrome\/(\d+)/.exec(navigator.userAgent) || [])[1] || ''})` : null);
-  if (desktop) desktop.stopKeys().then((keys) => check('screen', 'ok', `live overlay on your real desktop · stop: End button${keys.length ? ' or ' + keys.join(' / ') : ''}`));
+  if (desktop) desktop.stopKeys().then((keys) => check('screen', 'ok', `${desktop.captureMode === 'snapshot' ? 'desktop overlay · screenshot distortion on Mac' : 'live overlay on your real desktop'} · stop: End button${keys.length ? ' or ' + keys.join(' / ') : ''}`));
   else if (!navigator.mediaDevices?.getDisplayMedia) check('screen', '', 'not supported here, using the built-in desktop');
 
   hardware();
@@ -143,6 +144,25 @@ async function shareScreen() {
 // ---------- the run ----------
 const fx = createFx($('fx'));
 
+async function captureDesktop() {
+  const snapshot = desktop.captureMode === 'snapshot', live = $('liveBg');
+  if (snapshot) await desktop.captureHidden(true);
+  try {
+    live.srcObject = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 30, max: 30 }, width: { max: 1920 }, height: { max: 1080 } }, audio: false });
+    await live.play();
+    if (!snapshot) { live.hidden = false; return live; }
+    const still = document.createElement('canvas'); still.width = live.videoWidth; still.height = live.videoHeight;
+    if (!still.width || !still.height) throw new Error('No screen capture frame received');
+    still.getContext('2d').drawImage(live, 0, 0);
+    return still;
+  } finally {
+    if (snapshot) {
+      live.srcObject?.getTracks().forEach((track) => track.stop()); live.srcObject = null;
+      await desktop.captureHidden(false);
+    }
+  }
+}
+
 async function start() {
   initAudio(); startMusic();
   const bg = $('bg'), live = $('liveBg'), desk = $('desk');
@@ -150,13 +170,10 @@ async function start() {
   $('facecam').prepend($('camVideo'));   // the face cam rides along in the corner
 
   if (desktop) {
-    // the window is excluded from capture, so a live view of the whole screen does not show itself
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 30, max: 30 }, width: { max: 1920 }, height: { max: 1080 } }, audio: false });
-      live.srcObject = stream; live.hidden = false; await live.play();
-      fx.setSource(live, { seeThrough: true });
-    } catch { /* no capture: the overlay still draws notifications and chaos over the real screen */ }
-    show('stage'); await desktop.overlay(true);
+      fx.setSource(await captureDesktop(), { seeThrough: true });
+    } catch (error) { console.warn('Desktop capture unavailable; using transparent effects only:', error.message); }
+    show('stage'); desktopRestKey = (await desktop.overlay(true)).restKey;
     return run();
   }
   if (share?.surface === 'monitor' && share.video.videoWidth) {
@@ -246,7 +263,7 @@ function run() {
     $('rest').classList.toggle('on', closed);
     restSound(closed && level > 0);
     const ring = level < 0.3 ? 'var(--ok)' : level < 0.7 ? '#ffd166' : 'var(--bad)';
-    const face = closed ? 'resting' : eyes.state.delegate === 'keyboard' ? 'Space = rest' : eyes.state.face ? 'open' : 'no face';
+    const face = closed ? 'resting' : eyes.state.delegate === 'keyboard' ? (desktop ? (desktopRestKey ? `${desktopRestKey} = rest` : 'camera needed to rest') : 'Space = rest') : eyes.state.face ? 'open' : 'no face';
     if (ring + face !== lastRing) { lastRing = ring + face; $('hud').style.setProperty('--ring', ring); $('facecam').style.setProperty('--ring', closed ? 'var(--accent)' : ring); $('faceState').textContent = face; }
 
     const m = music(level, closed, t, dt);
@@ -317,12 +334,14 @@ if (desktop) {
   const q2 = q.cloneNode(true); q2.onclick = q.onclick; $('intro').append(q2);
   if (new URLSearchParams(location.search).has('smoke')) (async () => {   // npm run desktop self-check
     try {
-      const st = await navigator.mediaDevices.getDisplayMedia({ video: true }); const v = document.createElement('video'); v.muted = true; v.srcObject = st; await v.play();
-      // run the real GPU path on the live capture and time it
-      const live = $('liveBg'); live.srcObject = st; live.hidden = false; await live.play(); fx.setSource(live); show('stage');
+      const source = await captureDesktop();
+      // Run the same capture and GPU path used by Start.
+      fx.setSource(source); show('stage');
       const c = $('fx'), gl = c.getContext('webgl'), px = new Uint8Array(4); let n = 0, lit = 0; const t0 = performance.now();
-      while (performance.now() - t0 < 2500) { live.currentTime; fx.draw(n / 30, 0.8); gl.readPixels(c.width >> 1, c.height >> 1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); lit += px[0] + px[1] + px[2] > 0 ? 1 : 0; n++; await new Promise((r) => setTimeout(r, 0)); }
-      console.log(`SMOKE ok capture ${v.videoWidth}x${v.videoHeight} bridge ${typeof desktop.overlay} shader ${c.width}x${c.height} ${((performance.now() - t0) / n).toFixed(1)} ms/frame lit ${lit}/${n}`);
+      while (performance.now() - t0 < 2500) { fx.draw(n / 30, 0.8); gl.readPixels(c.width >> 1, c.height >> 1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); lit += px[0] + px[1] + px[2] > 0 ? 1 : 0; n++; await new Promise((r) => setTimeout(r, 0)); }
+      source.srcObject?.getTracks().forEach((track) => track.stop());
+      if (!lit) throw new Error('Screen capture rendered only black frames');
+      console.log(`SMOKE ok ${desktop.captureMode} capture ${source.videoWidth || source.width}x${source.videoHeight || source.height} bridge ${typeof desktop.overlay} shader ${c.width}x${c.height} ${((performance.now() - t0) / n).toFixed(1)} ms/frame lit ${lit}/${n}`);
     } catch (e) { console.log('SMOKE fail ' + e.message); }
   })();
 }

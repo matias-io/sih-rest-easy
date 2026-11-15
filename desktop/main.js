@@ -1,8 +1,7 @@
 // Desktop shell for the shared web app in ../web.
 // What it adds over Chrome: one window that covers the whole desktop, stays above everything,
-// lets every click and key pass through to your real apps, and is excluded from screen capture.
-// That last part is the trick: the page captures the live screen (without seeing itself) and
-// shows it back distorted, so your real desktop is what gets drunk while you keep using it.
+// lets clicks and keys pass through to your real apps. Windows can exclude the overlay
+// from live capture; macOS uses a clean snapshot because ScreenCaptureKit includes it.
 const { app, BrowserWindow, desktopCapturer, globalShortcut, ipcMain, screen, session } = require('electron');
 const { serve } = require('./serve');
 
@@ -13,6 +12,7 @@ app.commandLine.appendSwitch('enable-gpu-rasterization');
 app.commandLine.appendSwitch('enable-zero-copy');
 const SMOKE = process.env.REST_EASY_SMOKE === '1';   // CI-style check: no window shown, prints a result, exits
 const STOP_KEYS = ['CommandOrControl+Shift+X', 'CommandOrControl+Alt+X', 'F9'];
+const REST_KEY = 'CommandOrControl+Shift+Space';
 let win;
 
 app.whenReady().then(async () => {
@@ -23,8 +23,11 @@ app.whenReady().then(async () => {
   session.defaultSession.setPermissionRequestHandler((_wc, perm, cb) => cb(['media', 'fullscreen'].includes(perm)));
   session.defaultSession.setPermissionCheckHandler((_wc, perm) => ['media', 'fullscreen'].includes(perm));
   session.defaultSession.setDisplayMediaRequestHandler(async (_req, cb) => {
-    const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 0, height: 0 } });   // no thumbnails: they made Start take 15 s
-    cb({ video: sources.find((s) => s.display_id === String(display.id)) || sources[0] });
+    try {
+      const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 0, height: 0 } });
+      const source = sources.find((s) => s.display_id === String(display.id)) || sources[0];
+      cb(source ? { video: source } : {});
+    } catch (error) { console.error('Screen capture failed:', error.message); cb({}); }
   });
 
   win = new BrowserWindow({
@@ -36,19 +39,34 @@ app.whenReady().then(async () => {
   if (process.env.REST_EASY_VISIBLE !== '1') win.setContentProtection(true);
   win.loadURL(url + '?desktop=1' + (SMOKE ? '&smoke=1' : '') + (process.env.REST_EASY_QUERY ? '&' + process.env.REST_EASY_QUERY : ''));   // REST_EASY_QUERY=autorun=60 for a timed test run
 
+  // Modern macOS captures protected windows too. Hide ours while taking a single
+  // clean frame, then reuse that image for distortion without recursive feedback.
+  let restoreAfterCapture = false;
+  ipcMain.handle('captureHidden', (_event, hidden) => {
+    if (hidden) { restoreAfterCapture = win.isVisible(); win.hide(); }
+    else if (restoreAfterCapture && !win.isDestroyed()) { restoreAfterCapture = false; win.show(); }
+  });
+
   // overlay on: cover the desktop, stay above everything, let the mouse and keyboard through.
   // The page asks for the mouse back only while the pointer is over its own controls (the End button).
-  let overlayOn = false, keepTop = null;
+  let overlayOn = false, keepTop = null, resting = false;
   const setOverlay = (on) => {
     overlayOn = on; clearInterval(keepTop);
+    globalShortcut.unregister(REST_KEY); resting = false;
+    win.webContents.send('rest', false);
     win.setIgnoreMouseEvents(on); wasOver = false;
     win.setFocusable(!on);                       // typing goes to the real apps, and Alt+Tab skips us
     win.setSkipTaskbar(on);
     win.setAlwaysOnTop(on, 'screen-saver');
     if (on) {
+      win.blur();                              // setFocusable(false) alone keeps focus on macOS
       win.setBounds(display.bounds); win.showInactive(); win.moveTop();
       keepTop = setInterval(() => { if (!win.isDestroyed()) win.moveTop(); }, 2000);
     } else { win.show(); win.focus(); }
+    const restKey = on && globalShortcut.register(REST_KEY, () => {
+      resting = !resting; win.webContents.send('rest', resting);
+    }) ? REST_KEY.replace('CommandOrControl', process.platform === 'darwin' ? 'Cmd' : 'Ctrl') : null;
+    return { restKey };
   };
   ipcMain.handle('overlay', (_e, on) => setOverlay(on));
   let wasOver = false;
@@ -71,8 +89,8 @@ app.whenReady().then(async () => {
 
   win.webContents.on('console-message', (e) => { if (e.level === 'error' || e.level === 3 || /^(PERF|AUTORUN)/.test(e.message || '')) console.log('[page] ' + e.message); if (process.env.REST_EASY_QUERY && (e.message || '').startsWith('AUTORUN done')) setTimeout(() => app.exit(0), 800); });
   if (SMOKE) {
-    win.webContents.on('console-message', (e) => { const msg = e.message || ''; if (msg.startsWith('SMOKE ')) { console.log(msg); app.quit(); } });
-    setTimeout(() => { console.log('SMOKE timeout'); app.quit(); }, 25000);
+    win.webContents.on('console-message', (e) => { const msg = e.message || ''; if (msg.startsWith('SMOKE ')) { console.log(msg); app.exit(msg.startsWith('SMOKE ok') ? 0 : 1); } });
+    setTimeout(() => { console.log('SMOKE timeout'); app.exit(1); }, 25000);
   }
 });
 app.on('window-all-closed', () => app.quit());
