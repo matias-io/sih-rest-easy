@@ -6,6 +6,11 @@
 const { app, BrowserWindow, desktopCapturer, globalShortcut, ipcMain, screen, session } = require('electron');
 const { serve } = require('./serve');
 
+// use the machine: discrete/high-performance GPU, GPU rasterization, no copies of video frames
+app.commandLine.appendSwitch('force_high_performance_gpu');
+app.commandLine.appendSwitch('ignore-gpu-blocklist');
+app.commandLine.appendSwitch('enable-gpu-rasterization');
+app.commandLine.appendSwitch('enable-zero-copy');
 const SMOKE = process.env.REST_EASY_SMOKE === '1';   // CI-style check: no window shown, prints a result, exits
 const STOP_KEYS = ['CommandOrControl+Shift+X', 'CommandOrControl+Alt+X', 'F9'];
 let win;
@@ -36,34 +41,35 @@ app.whenReady().then(async () => {
   let overlayOn = false, keepTop = null;
   const setOverlay = (on) => {
     overlayOn = on; clearInterval(keepTop);
-    win.setIgnoreMouseEvents(on, { forward: true });
+    win.setIgnoreMouseEvents(on); wasOver = false;
     win.setFocusable(!on);                       // typing goes to the real apps, and Alt+Tab skips us
     win.setSkipTaskbar(on);
     win.setAlwaysOnTop(on, 'screen-saver');
     if (on) {
       win.setBounds(display.bounds); win.showInactive(); win.moveTop();
-      keepTop = setInterval(() => { if (!win.isDestroyed()) { win.setAlwaysOnTop(true, 'screen-saver'); win.moveTop(); } }, 1000);
+      keepTop = setInterval(() => { if (!win.isDestroyed()) win.moveTop(); }, 2000);
     } else { win.show(); win.focus(); }
   };
   ipcMain.handle('overlay', (_e, on) => setOverlay(on));
+  let wasOver = false;
   let hitBox = null;   // screen rectangle of the page's own controls, in DIPs
   ipcMain.on('hitBox', (_e, box) => { hitBox = box; });
   setInterval(() => {
     if (!overlayOn || !hitBox || win.isDestroyed()) return;
     const p = screen.getCursorScreenPoint(), b = win.getBounds();
     const over = p.x - b.x >= hitBox.x && p.x - b.x <= hitBox.x + hitBox.w && p.y - b.y >= hitBox.y && p.y - b.y <= hitBox.y + hitBox.h;
-    win.setIgnoreMouseEvents(!over, { forward: true });
+    if (over !== wasOver) { wasOver = over; win.setIgnoreMouseEvents(!over, { forward: false }); }   // only on change
   }, 40);
   // stop keys are handled here, in the main process, so they work even if the page is stuck
   const stopNow = () => { if (overlayOn) { setOverlay(false); win.webContents.send('stop'); } };
   // another app may already own a shortcut, so try several and tell the page which ones we got
   const stopKeys = STOP_KEYS.filter((key) => globalShortcut.register(key, stopNow));
   ipcMain.handle('stopKeys', () => stopKeys.map((k) => k.replace('CommandOrControl', process.platform === 'darwin' ? 'Cmd' : 'Ctrl')));
-  globalShortcut.register('CommandOrControl+Shift+Q', () => app.quit());
-  ipcMain.handle('quit', () => app.quit());
+  globalShortcut.register('CommandOrControl+Shift+Q', () => { win.destroy(); app.exit(0); });
+  ipcMain.handle('quit', () => { clearInterval(keepTop); win.destroy(); app.exit(0); });   // no slow teardown
   ipcMain.handle('hardware', () => { const os = require('node:os'); return { cpu: os.cpus()[0].model.replace(/\s+/g, ' ').trim(), cores: os.cpus().length, ramGb: Math.round(os.totalmem() / 2 ** 30) }; });
 
-  win.webContents.on('console-message', (e) => { if (e.level === 'error' || e.level === 3) console.log('[page] ' + e.message); });
+  win.webContents.on('console-message', (e) => { if (e.level === 'error' || e.level === 3 || (e.message || '').startsWith('PERF')) console.log('[page] ' + e.message); });
   if (SMOKE) {
     win.webContents.on('console-message', (e) => { const msg = e.message || ''; if (msg.startsWith('SMOKE ')) { console.log(msg); app.quit(); } });
     setTimeout(() => { console.log('SMOKE timeout'); app.quit(); }, 25000);

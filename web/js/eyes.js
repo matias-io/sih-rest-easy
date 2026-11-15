@@ -17,11 +17,15 @@ export async function createEyes(video) {
   try { lm = await make('GPU'); } catch { delegate = 'CPU'; lm = await make('CPU'); }
 
   const s = { closed: false, score: 0, face: false, blinks: 0, ms: 0, delegate, forced: false };
-  let last = -1, smooth = 0, base = 0.15, listeners = [];
+  let last = -1, smooth = 0, base = 0.15, listeners = [], high = true, skip = false;
+  const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+  // eyelid gap over eye width, from the mesh itself: 0 open, 1 shut
+  const lid = (m, top, bottom, outer, inner) => clamp((0.27 - dist(m[top], m[bottom]) / (dist(m[outer], m[inner]) || 1)) / 0.17, 0, 1);
   const set = (closed) => { if (closed !== s.closed) { s.closed = closed; if (!closed) s.blinks++; listeners.forEach((f) => f(closed)); } };
 
   function frame() {
-    if (video.readyState >= 2 && video.currentTime !== last) {
+    skip = !high && !skip;   // Light: every other frame
+    if (!skip && video.readyState >= 2 && video.currentTime !== last) {
       last = video.currentTime;
       const t0 = performance.now();
       let res; try { res = lm.detectForVideo(video, t0); } catch { res = null; }
@@ -31,7 +35,11 @@ export async function createEyes(video) {
       if (cats) {
         let l = 0, r = 0;
         for (const c of cats) { if (c.categoryName === 'eyeBlinkLeft') l = c.score; else if (c.categoryName === 'eyeBlinkRight') r = c.score; }
-        smooth = smooth * 0.4 + ((l + r) / 2) * 0.6;
+        let now = (l + r) / 2;
+        // High: blend the model's blink score with the measured eyelid gap, which holds up better with glasses
+        const m = high && res.faceLandmarks?.[0];
+        if (m) now = now * 0.55 + ((lid(m, 159, 145, 33, 133) + lid(m, 386, 374, 362, 263)) / 2) * 0.45;
+        smooth = smooth * 0.4 + now * 0.6;
         s.score = smooth;
         // base follows the open-eye reading: quick to drop, slow to rise, frozen while closed
         if (!s.closed) base += (smooth - base) * (smooth < base ? 0.3 : 0.015);
@@ -47,6 +55,7 @@ export async function createEyes(video) {
   return {
     state: s,
     onChange: (f) => listeners.push(f),
+    setQuality: (q) => { high = q !== 'light'; },
     // keyboard fallback: hold Space to "close your eyes"
     force: (closed) => { s.forced = closed; set(closed); }
   };

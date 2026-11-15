@@ -13,7 +13,7 @@ Built at the Stupid Ideas Hackathon, Ottawa, 15 Nov 2026, by Matias Suxo.
 3. Press Start. The page goes fullscreen. While your eyes are open, a "screen BAC" climbs: the picture sways, doubles, warps, and work notifications get stranger until it is full 2012 montage parody.
 4. Close your eyes for a few seconds. A bell tells you the screen is sober again.
 
-Eye tracking is MediaPipe Face Landmarker (478-point face mesh, blink blendshapes) running on your GPU in the browser. The camera never leaves your device. All sound is synthesized. No build step, no server.
+Eye tracking is MediaPipe Face Landmarker (478-point face mesh, blink blendshapes) running on your GPU in the browser. The camera never leaves your device. No synthesized sound: it plays official Android system sounds (Google AOSP, Apache 2.0, in `web/vendor/sounds`), and when run locally, your operating system's own notification sounds. Screen effects run in a WebGL shader. No build step.
 
 ## Two versions, one app
 
@@ -40,3 +40,5 @@ npm run deploy    # Cloudflare (sih.matiass.ca)
 Speed is set on the setup screen (7 to 35 seconds from sober to gone) or with `?rise=20`. Rehearsal switches (web): `?level=0.8` starts drunk, `?cam=0` skips the camera (hold Space to close your eyes), `]` adds drunkenness. `REST_EASY_VISIBLE=1 npm run desktop` lets screenshots see the overlay (it will also see itself).
 
 Brand icons in `web/vendor/icons` are from simple-icons (CC0); the brands belong to their owners and are used here as parody.
+
+Sounds in `web/vendor/sounds` are Android system sounds from the Android Open Source Project (Google), Apache License 2.0.
