@@ -206,7 +206,7 @@ async function start() {
 function run() {
   running = true;
   eyes.resume?.();
-  const drunk = createDrunk({ world: $('world'), fx, mlg: $('mlg'), toasts: $('toasts') });
+  const drunk = createDrunk({ world: $('world'), fx, mlg: $('mlg'), toasts: $('toasts'), ads: $('ads') });
   const feed = createFeed($('toasts'), $('chatlog'));
   const ads = createAds($('ads'));
   const chaos = createChaos();
@@ -274,7 +274,7 @@ function run() {
     if (ring + face !== lastRing) { lastRing = ring + face; $('hud').style.setProperty('--ring', ring); $('facecam').style.setProperty('--ring', closed ? 'var(--accent)' : ring); $('faceState').textContent = face; }
 
     const m = music(level, closed, t, dt);
-    chaos.tick(t, level, closed);
+    m.sting = chaos.tick(t, level, closed);   // a meme clip just started: the overlays flinch
     drunk.render(t, level, m);
     ads.tick(t, level, m.energy);
     if (!closed && level > 0.3 && t > cameoAt) {

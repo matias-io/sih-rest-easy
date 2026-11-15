@@ -39,8 +39,8 @@ export function createChaos() {
   }
 
   function tick(t, level, closed) {
-    if (!Number.isFinite(t) || !Number.isFinite(level)) { clear(); return; }
-    if (closed || level < 0.18) { clear(); return; }
+    if (!Number.isFinite(t) || !Number.isFinite(level)) { clear(); return false; }
+    if (closed || level < 0.18) { clear(); return false; }
     if (lastTime !== null && t < lastTime) clear();
     lastTime = t;
     const intensity = Math.min(1, Math.max(0, (level - 0.18) / 0.82));
@@ -52,7 +52,7 @@ export function createChaos() {
       else audio.volume = volume;
     }
     if (nextAt === null) nextAt = t + (0.65 + Math.random() * 0.7) / rate;
-    if (t < nextAt) return;
+    if (t < nextAt) return false;
     // No queued burst after a stalled frame, and no unbounded audio nodes.
     nextAt = t + (0.65 + Math.random() * 0.7) / rate;
     while (active.size >= 5) stop(active.keys().next().value);
@@ -61,6 +61,7 @@ export function createChaos() {
     audio.onended = audio.onerror = () => stop(audio);
     active.set(audio, t + 5);
     audio.play().catch(() => stop(audio));
+    return true;   // a clip started this frame
   }
 
   return { tick, clear };
