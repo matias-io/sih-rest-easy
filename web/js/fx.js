@@ -20,14 +20,13 @@ void main(){
     float pulse = 0.7 + 0.2 * en + 0.6 * k;
     vec2 drift = vec2(sin(t * 0.8), cos(t * 0.65)) * strength * pulse * (0.003 + 0.009 * strength);
     vec2 q = uv + drift;
-    float r = strength * (0.001 + 0.006 * strength * pulse);
-    vec3 blurred = (samp(q) * 2.0 + samp(q + vec2(r, r)) + samp(q - vec2(r, r))
-      + samp(q + vec2(r, -r)) + samp(q + vec2(-r, r))) / 6.0;
+    // Wide two-ring blur: the screen goes soft, not muddy.
+    float r = strength * (0.002 + 0.010 * strength * pulse);
+    vec3 blurred = (samp(q) * 2.0
+      + samp(q + vec2(r, 0.0)) + samp(q - vec2(r, 0.0)) + samp(q + vec2(0.0, r)) + samp(q - vec2(0.0, r))
+      + samp(q + vec2(r, r) * 1.8) + samp(q - vec2(r, r) * 1.8) + samp(q + vec2(r, -r) * 1.8) + samp(q + vec2(-r, r) * 1.8)) / 10.0;
     vec3 ghost = samp(q + vec2(0.006 + 0.02 * strength, 0.002 + 0.006 * sin(t * 0.9)) * strength * pulse);
-    vec3 c = mix(blurred, ghost, strength * 0.45);
-    float l = dot(c, vec3(0.299, 0.587, 0.114));
-    c = hue(mix(vec3(l), c, 1.0 + strength * 0.8));
-    gl_FragColor = vec4(c, 1.0);
+    gl_FragColor = vec4(mix(blurred, ghost, strength * 0.2), 1.0);
     return;
   }
   vec2 q = uv;
