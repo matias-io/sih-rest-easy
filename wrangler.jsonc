@@ -2,5 +2,8 @@
   "name": "sih-rest-easy",
   "compatibility_date": "2026-11-01",
   "assets": { "directory": "./web" },
-  "routes": [{ "pattern": "sih.matiass.ca", "custom_domain": true }]
+  "workers_dev": true
+  // To serve it on sih.matiass.ca, log wrangler in to the Cloudflare account that owns the
+  // matiass.ca zone, then add:
+  // "routes": [{ "pattern": "sih.matiass.ca", "custom_domain": true }]
 }
