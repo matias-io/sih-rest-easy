@@ -56,6 +56,15 @@ export function createDrunk({ world, fx, mlg, toasts, ads = null }) {
     el.append(img, cap); shake = 1;
   }
 
+  const THEO = ['this app is mid. anyway, sponsor segment', 'you should have used tRPC for your eyelids', 'blinking is a skill issue', 'I rewrote your sleep schedule in Rust'];
+  function theo() {
+    const el = spawn('sam', { left: rnd(4, 62) + '%' }, 2700);
+    el.style.setProperty('--r', rnd(-14, 14) + 'deg');
+    const img = new Image(); img.src = new URL('../vendor/img/theo.jpg', import.meta.url).href; img.alt = 'Theo Browne';
+    const cap = document.createElement('b'); cap.textContent = THEO[Math.floor(Math.random() * THEO.length)];
+    el.append(img, cap); shake = 1;
+  }
+
   const DARIO = ['Claude has entered the meeting.', 'Your context window has a visitor.', 'The printer is now an agent.'];
   function dario() {
     const el = spawn('dario' + (Math.random() < 0.5 ? ' from-left' : ''), {}, 3800);
@@ -111,5 +120,5 @@ export function createDrunk({ world, fx, mlg, toasts, ads = null }) {
   }
 
   function reset() { club.clear(); haze.clear(); mlg.style.opacity = ''; if (ads) ads.style.opacity = ''; toasts.style.opacity = ''; lastDeco = ''; for (const el of effects.keys()) removeEffect(el); toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
-  return { render, reset, hit, sam, dario, zuck };
+  return { render, reset, hit, sam, dario, zuck, theo };
 }
