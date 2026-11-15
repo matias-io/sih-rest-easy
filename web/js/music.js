@@ -43,7 +43,9 @@ export function music(level, closed, t, dt) {
     an.getByteFrequencyData(buf);
     let b = 0, a = 0; for (let i = 1; i < 8; i++) b += buf[i]; for (let i = 0; i < 200; i++) a += buf[i];
     bass = b / 7 / 255; e = Math.min(1, Math.max(0, (a / 200 / 255 - 0.12) * 1.9));
-    const baseVolume = closed ? 0.1 : 0.25 + 0.75 * level;
+    // Silent when sober (BAC 0), quiet while BAC is low, full by the top.
+    const sober = level <= 0.001, ramp = 0.04 + 0.96 * level ** 1.6;
+    const baseVolume = sober ? 0 : closed ? Math.min(0.1, ramp) : ramp;
     // Keep the track playing underneath alerts; recover smoothly after the last one ends.
     const targetVolume = baseVolume * (notificationAudio.active > 0 ? 0.35 : 1);
     gain.gain.value += (targetVolume - gain.gain.value) * 0.08;
