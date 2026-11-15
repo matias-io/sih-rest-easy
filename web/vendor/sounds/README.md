@@ -20,6 +20,8 @@ PagerDuty's recording is from its Chrome extension, not a verified current mobil
 
 The local server can replace only generic OS sounds with the host's sound files. It cannot replace Slack, Teams, Discord or PagerDuty recordings. Dismissal, eviction, rest and End still stop active sounds. The train horn is no longer registered or triggered; the legacy file remains unused.
 
+Notifications play at 75% media volume over the continuously playing soundtrack. While any notification is active, music smoothly lowers to 35% of its current target volume, then returns when the last alert ends or is dismissed. UI effects do not trigger this music adjustment.
+
 Official references:
 
 - [Slack sound preferences](https://slack.com/help/articles/201355156-Configure-your-Slack-notifications)
