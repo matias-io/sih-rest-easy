@@ -47,7 +47,7 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 
 /* ---------- stage ---------- */
 #stage { position:fixed; inset:0; background:#000; overflow:hidden; }
-#world { position:absolute; inset:0; transform-origin:50% 55%; will-change:transform, filter; }
+#world { position:absolute; inset:0; transform-origin:50% 55%; will-change:transform; }
 #bg, #fx, #liveBg { position:absolute; inset:0; width:100%; height:100%; background-size:100% 100%; background-position:center; }
 #liveBg { object-fit:contain; background:#000; }
 #liveBg { opacity:0; pointer-events:none; }   /* decoded for the shader, never painted */
@@ -62,7 +62,7 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 .chatlog { flex:1; overflow:auto; padding:12px 14px; font-size:14px; display:flex; flex-direction:column; gap:10px; }
 .chatlog p { margin:0; } .chatlog b { color:#fff; margin-right:6px; }
 #chatform { padding:10px; } #chatform input { width:100%; background:#222529; border:1px solid #565856; color:#fff; border-radius:8px; padding:10px 12px; font:inherit; font-size:14px; outline:0; }
-.taskbar { position:absolute; left:0; right:0; bottom:0; height:46px; background:#101422e6; backdrop-filter:blur(12px); display:flex; align-items:center; gap:10px; padding:0 14px; }
+.taskbar { position:absolute; left:0; right:0; bottom:0; height:46px; background:#101422e6; display:flex; align-items:center; gap:10px; padding:0 14px; }
 .startbtn { width:24px; height:24px; border-radius:6px; background:conic-gradient(#4f8cff, #6fd3ff, #4f8cff); }
 .tb-app { width:30px; height:30px; border-radius:7px; background:#2a3147; position:relative; } .tb-app.on::after { content:""; position:absolute; left:9px; right:9px; bottom:-5px; height:3px; border-radius:2px; background:#7c9cff; }
 .clock { margin-left:auto; font-size:13px; color:#cfd6e6; }
@@ -88,6 +88,10 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 .toast .acts .go { background:#107c10; border-color:#107c10; } .toast .acts .no { background:#c42b1c; border-color:#c42b1c; }
 .toast.dank { font-family:"Comic Sans MS", "Chalkboard SE", cursive; background:#0d0; color:#000; border:3px solid #f0f; animation:toastIn .3s both, hue 1.2s linear infinite; }
 .toast.dank .msg, .toast.dank .app, .toast.dank .x { color:#000; }
+.toast.photo-toast .feed-photo { display:block; width:100%; height:clamp(100px,22vh,176px); object-fit:cover; object-position:center 35%; margin:0 0 10px; border-radius:4px; background:#171e23; }
+.toast.photo-toast .feed-photo.illustration { object-fit:contain; padding:14px; background:#dce8df; }
+.toast.photo-toast button.x { border:0; background:transparent; padding:4px 6px; cursor:pointer; font:inherit; font-size:11px; }
+.toast.photo-toast button.x:focus-visible { outline:2px solid currentColor; outline-offset:2px; border-radius:3px; }
 @keyframes hue { to { filter:hue-rotate(360deg); } }
 
 /* ---------- hud, rest, mlg ---------- */
@@ -115,6 +119,8 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 @keyframes morning { 0% { opacity:0; transform:translateX(-50%) translateY(-10px) scale(.9); } 10%,80% { opacity:1; transform:translateX(-50%) scale(1); } 100% { opacity:0; transform:translateX(-50%) translateY(-8px); } }
 
 #ads { position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:3; }
+#ads, #mlg { contain: layout paint style; }
+.toast { contain: layout style; }
 #mlg, #toasts { z-index:4; }   /* ads sit under the jokes and the End button */
 .sam { position:absolute; bottom:0; width:min(44vw,520px); animation:sam 2.7s cubic-bezier(.2,1.4,.4,1) forwards; transform-origin:50% 100%; }
 .sam img { display:block; width:100%; border-radius:18px 18px 0 0; border:6px solid #fff; border-bottom:0; }
@@ -135,11 +141,11 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 @keyframes spin { from { transform:rotate(0) scale(.3); opacity:0; } 20% { opacity:1; } to { transform:rotate(720deg) scale(1.4); opacity:0; } }
 .chip { position:absolute; top:-60px; width:0; height:0; border-left:16px solid transparent; border-right:16px solid transparent; border-bottom:28px solid #ff9d1c; animation:fall linear forwards; }
 @keyframes fall { to { transform:translateY(115vh) rotate(900deg); } }
-.shades { position:absolute; left:50%; top:-120px; width:300px; height:64px; margin-left:-150px; animation:shades 3s ease-in forwards; background:
+.shades { position:absolute; left:50%; top:38%; width:300px; height:64px; margin-left:-150px; animation:shades 3s ease-in forwards; background:
   linear-gradient(#000,#000) 0 0/100% 12px no-repeat, linear-gradient(#000,#000) 12px 12px/120px 40px no-repeat, linear-gradient(#000,#000) 168px 12px/120px 40px no-repeat,
   linear-gradient(#000,#000) 24px 52px/96px 12px no-repeat, linear-gradient(#000,#000) 180px 52px/96px 12px no-repeat; }
-@keyframes shades { 0% { top:-120px; } 60%,90% { top:38%; } 100% { top:38%; opacity:0; } }
-.rainbow { position:absolute; inset:0; background:linear-gradient(120deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); mix-blend-mode:overlay; opacity:0; animation:hue 1s linear infinite; }
+@keyframes shades { 0% { transform:translateY(calc(-38vh - 120px)); } 60%,90% { transform:translateY(0); } 100% { transform:translateY(0); opacity:0; } }
+.rainbow { position:absolute; inset:0; background:linear-gradient(120deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00); opacity:0; }
 
 /* ---------- desktop app: the window is transparent, the stage shows the live screen ---------- */
 body.desktop, body.desktop #stage { background:transparent; }

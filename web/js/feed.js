@@ -8,6 +8,13 @@ const ICONS = new URL('../vendor/icons/', import.meta.url).href;
 const icon = (bg, file) => `<span class="ti" style="background:${bg}"><img src="${ICONS}${file}.svg" alt=""></span>`;
 const text = (bg, glyph, fg = '#fff') => `<span class="ti" style="background:${bg};color:${fg};font-size:9px">${glyph}</span>`;
 const SLACK = icon('#4A154B', 'slack');
+const PICTURES = new URL('../vendor/img/feed/', import.meta.url).href;
+// Bundled cameos, with source credits in vendor/img/feed/sources.json.
+const PHOTOS = [
+  { file: 'jensen.jpg', title: 'Jensen Huang', alt: 'Jensen Huang wearing a leather jacket at a conference', caption: 'Your GPU has joined the meeting.' },
+  { file: 'lori-and-jensen.jpg', title: 'Lori & Jensen Huang', alt: 'Lori Huang seated beside Jensen Huang', caption: 'This meeting could have been a photo.' },
+  { file: 'fictional-spy.svg', title: 'Agent 404 · fictional spy', alt: 'Cartoon detective wearing a hat and holding a magnifying glass', caption: 'Undercover in the printer queue.', illustration: true }
+];
 // name, icon, chat (shows the sender's avatar and, for Teams, the quick-reply box)
 const APPS = {
   discord: ['Discord', icon('#5865F2', 'discord'), 'discord'], slack: ['Slack', SLACK, 'chat'], teams: ['Microsoft Teams', icon('#5059C9', 'microsoftteams'), 'teams'], outlook: ['Outlook', icon('#0078D4', 'microsoftoutlook'), 'chat'],
@@ -16,7 +23,8 @@ const APPS = {
   cursor: ['Cursor', text('#111', '◩')], cf: ['Cloudflare', icon('#F38020', 'cloudflare')], npm: ['npm', icon('#CB3837', 'npm')],
   linkedin: ['LinkedIn', icon('#0A66C2', 'linkedin')], zoom: ['Zoom', icon('#0B5CFF', 'zoom')], docker: ['Docker Desktop', icon('#2496ED', 'docker')],
   win: ['Windows Update', icon('#0078D4', 'windows11')], cal: ['Google Calendar', icon('#4285F4', 'googlecalendar')], chatgpt: ['ChatGPT', icon('#0d0d0d', 'openai'), 'chat'],
-  nvidia: ['NVIDIA App', icon('#76B900', 'nvidia')], so: ['Stack Overflow', icon('#F58025', 'stackoverflow')], mlg: ['xX_N0T1FY_Xx', text('#0d0', '404', '#000')]
+  nvidia: ['NVIDIA App', icon('#76B900', 'nvidia')], so: ['Stack Overflow', icon('#F58025', 'stackoverflow')], mlg: ['xX_N0T1FY_Xx', text('#0d0', '404', '#000')],
+  photos: ['Random photo drop', text('#426257', '▧')]
 };
 const AVATAR = ['#c239b3', '#0f6cbd', '#107c10', '#d83b01', '#8764b8', '#038387', '#ca5010'];
 const avatar = (who) => {
@@ -92,8 +100,23 @@ const FEED = [
 
 export function createFeed(box, chatlog) {
   const used = FEED.map(() => 0);
+  const active = new Set();
+  let photosIn = 4 + Math.floor(Math.random() * 4), photoDeck = [], lastPhoto;
   function push(tier) {
-    const list = FEED[tier], [app, who, msg, buttons, sound] = list[used[tier]++ % list.length];
+    // Leave 3–6 regular notifications between photos, across all feed tiers.
+    let photo;
+    if (--photosIn === 0) {
+      if (!photoDeck.length) photoDeck = [...PHOTOS];
+      const choices = photoDeck.filter(item => item !== lastPhoto);
+      photo = choices[Math.floor(Math.random() * choices.length)];
+      photoDeck.splice(photoDeck.indexOf(photo), 1);
+      lastPhoto = photo;
+      photosIn = 4 + Math.floor(Math.random() * 4);
+    }
+    const list = FEED[tier];
+    const [app, who, msg, buttons, sound] = photo
+      ? ['photos', photo.title, photo.caption]
+      : list[used[tier]++ % list.length];
     const [name, mark, kind] = APPS[app];
     const el = document.createElement('div');
     const call = buttons?.includes('Accept');
@@ -111,13 +134,28 @@ export function createFeed(box, chatlog) {
       if (kind === 'teams' && !buttons) { const r = document.createElement('div'); r.className = 'reply'; r.innerHTML = '<span>↩&nbsp; Reply</span>'; el.append(r); }
       if (buttons) { const row = document.createElement('div'); row.className = 'acts'; for (const b of buttons) { const btn = document.createElement('button'); btn.textContent = b; btn.className = /Accept|Join/.test(b) ? 'go' : /Decline/.test(b) ? 'no' : ''; row.append(btn); } el.append(row); }
     }
+    if (photo) {
+      el.classList.add('photo-toast');
+      const img = document.createElement('img');
+      img.className = 'feed-photo' + (photo.illustration ? ' illustration' : '');
+      img.src = PICTURES + photo.file; img.alt = photo.alt; img.decoding = 'async';
+      img.onerror = () => img.remove();
+      el.querySelector('.th').after(img);
+      const dismiss = document.createElement('button');
+      dismiss.className = 'x'; dismiss.type = 'button'; dismiss.textContent = '✕';
+      dismiss.setAttribute('aria-label', 'Dismiss photo of ' + photo.title);
+      el.querySelector('.x').replaceWith(dismiss);
+    }
     const stopSound = notify(sound || (call ? app === 'discord' ? 'discordCall' : 'teamsCall' : { slack: 'slack', teams: 'teams', discord: 'discord', outlook: 'email', cal: 'calendar', pager: 'critical', win: 'critical' }[app] || 'system'));
-    const close = () => { stopSound(); el.classList.add('out'); setTimeout(() => el.remove(), 300); };
-    el.dismiss = close;
-    el.onclick = close; setTimeout(close, 7000);
+    let closed = false, exitTimer;
+    const dispose = () => { clearTimeout(expiryTimer); clearTimeout(exitTimer); stopSound(); active.delete(el); el.remove(); };
+    const close = () => { if (closed) return; closed = true; clearTimeout(expiryTimer); stopSound(); el.classList.add('out'); exitTimer = setTimeout(dispose, 300); };
+    const expiryTimer = setTimeout(close, 7000);
+    el.dismiss = close; el.dispose = dispose;
+    el.onclick = close; active.add(el);
     box.appendChild(el);
-    while (box.children.length > 4) { box.firstChild.dismiss(); box.firstChild.remove(); }
+    while (box.children.length > 4) box.firstChild.dispose();
     if (chatlog && app === 'slack') { const p = document.createElement('p'), b = document.createElement('b'); b.textContent = who.split(' (')[0]; p.append(b, msg); chatlog.append(p); while (chatlog.children.length > 40) chatlog.firstChild.remove(); chatlog.scrollTop = 1e6; }
   }
-  return { push, clear: () => { for (const el of box.children) el.dismiss(); box.innerHTML = ''; if (chatlog) chatlog.innerHTML = ''; } };
+  return { push, clear: () => { for (const el of active) el.dispose(); box.innerHTML = ''; if (chatlog) chatlog.innerHTML = ''; } };
 }

@@ -6,8 +6,16 @@ const POPS = ['WOW', '360', 'MLG', 'SAMPLE TEXT', '+100', 'OHHHH', 'NO SLEEP', '
 export function createDrunk({ world, fx, mlg, toasts }) {
   const rainbow = document.createElement('div'); rainbow.className = 'rainbow'; mlg.appendChild(rainbow);
   let nextGag = 0, shake = 0;
+  let nextFilter = 0, lastFilter = '', lastTransform = '', lastToastTransform = '', lastOpacity = '';
+  const effects = new Map();
+  const removeEffect = (el) => { clearTimeout(effects.get(el)); effects.delete(el); el.remove(); };
 
-  const spawn = (cls, style, life) => { const el = document.createElement('div'); el.className = cls; Object.assign(el.style, style); mlg.appendChild(el); setTimeout(() => el.remove(), life); return el; };
+  const spawn = (cls, style, life) => {
+    // Click bursts must not grow the layer tree or leave timers alive after End.
+    while (effects.size >= 80) removeEffect(effects.keys().next().value);
+    const el = document.createElement('div'); el.className = cls; Object.assign(el.style, style); mlg.appendChild(el);
+    effects.set(el, setTimeout(() => removeEffect(el), life)); return el;
+  };
   const rnd = (a, b) => a + Math.random() * (b - a);
 
   function hit(x, y) { spawn('hit', { left: x + 'px', top: y + 'px' }, 400); hitmarker(); shake = 1; }
@@ -43,25 +51,31 @@ export function createDrunk({ world, fx, mlg, toasts }) {
     const dy = Math.cos(t * 0.5) * sway * 14 + (Math.random() - 0.5) * (mlgAmt * 14 + shake * 30 + k * 18);
     const sc = 1 + sway * 0.05 + Math.sin(t * 1.3) * deep * 0.04 + k * 0.05;
     const skew = Math.sin(t * 1.1) * deep * 5;
-    world.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) skewX(${skew.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+    const transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) skewX(${skew.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+    if (transform !== lastTransform) world.style.transform = lastTransform = transform;
 
     // notifications sway with the room but stay sharp, so the jokes stay readable
-    toasts.style.transform = `translate(${(dx * 0.5).toFixed(1)}px,${(dy * 0.5).toFixed(1)}px) rotate(${(rot * 0.6).toFixed(2)}deg)`;
+    const toastTransform = `translate(${(dx * 0.5).toFixed(1)}px,${(dy * 0.5).toFixed(1)}px) rotate(${(rot * 0.6).toFixed(2)}deg)`;
+    if (toastTransform !== lastToastTransform) toasts.style.transform = lastToastTransform = toastTransform;
 
     if (fx.active) {
       fx.draw(t, level, m);         // picture or live video: everything happens on the GPU
-      world.style.filter = '';
-    } else {
-      // built-in desktop (real DOM): compositor-only filters, nothing that needs the CPU
-      const blur = sway * 1.1 + Math.max(0, Math.sin(t * 0.8)) * deep * 1.6;
+      if (lastFilter) world.style.filter = lastFilter = '';
+    } else if (t >= nextFilter || (level < 0.08 && lastFilter)) {
+      // Keep DOM effects to a color matrix: fullscreen CSS blur repeatedly
+      // processes the whole desktop. Captured video still gets shader blur.
+      // Update colors at 20 Hz; compositor motion stays at display rate.
+      nextFilter = t + 0.05;
       const hue = deep * Math.sin(t * 0.6) * 70 + mlgAmt * ((t * 240) % 360);
-      world.style.filter = level < 0.08 ? '' : `blur(${blur.toFixed(2)}px) saturate(${(1 + deep * 1.2 + mlgAmt * 2).toFixed(2)}) hue-rotate(${hue.toFixed(0)}deg)${m.mode === 7 && k > 0.5 ? ' invert(1)' : ''}`;
+      const filter = level < 0.08 ? '' : `saturate(${(1 + deep * 1.2 + mlgAmt * 2).toFixed(2)}) hue-rotate(${hue.toFixed(0)}deg)${m.mode === 7 && k > 0.5 ? ' invert(1)' : ''}`;
+      if (filter !== lastFilter) world.style.filter = lastFilter = filter;
     }
 
-    rainbow.style.opacity = (mlgAmt * 0.35).toFixed(2);
+    const opacity = (mlgAmt * 0.35).toFixed(2);
+    if (opacity !== lastOpacity) rainbow.style.opacity = lastOpacity = opacity;
     if (mlgAmt > 0 && (t > nextGag || (m.beat && Math.random() < 0.5))) { gag(); nextGag = t + rnd(0.25, 1.1 - mlgAmt * 0.6); }
   }
 
-  function reset() { toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
+  function reset() { for (const el of effects.keys()) removeEffect(el); toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
   return { render, reset, hit, sam };
 }

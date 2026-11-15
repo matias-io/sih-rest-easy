@@ -8,6 +8,7 @@
   transform: rotate(var(--ad-rotation));
   animation: ad-pop 180ms cubic-bezier(.15, .85, .3, 1.2) both;
   isolation: isolate;
+  contain: layout style;
 }
 .ad-popup *, .ad-popup *::before, .ad-popup *::after { box-sizing: border-box; }
 .ad-card { position: relative; border: 5px solid #e30000; background: #fff600; box-shadow: 5px 5px 0 #240900; }

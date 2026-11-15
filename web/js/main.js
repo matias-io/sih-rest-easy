@@ -30,6 +30,7 @@ function check(key, cls, text) {
 
 async function setup() {
   show('setup'); loadMusic(); initAudio();
+  eyes.resume?.();
   const brand = navigator.userAgentData?.brands?.find((b) => !/Not/.test(b.brand))?.brand || (/(Firefox|Safari|Chrome)/.exec(navigator.userAgent) || ['browser'])[0];
   check('browser', document.fullscreenEnabled ? 'ok' : 'bad', `${brand} on ${navigator.userAgentData?.platform || navigator.platform}`);
   check('display', 'ok', `${screen.width}×${screen.height} at ${devicePixelRatio}x`);
@@ -62,8 +63,11 @@ async function setup() {
 let watching = false;
 function watchEyes() {
   if (watching) return; watching = true;
-  const tick = () => {
+  let nextUpdate = 0;
+  const tick = (now = performance.now()) => {
     if (running || $('setup').hidden) { watching = false; return; }
+    if (now < nextUpdate) { requestAnimationFrame(tick); return; }
+    nextUpdate = now + 100;
     const s = eyes.state;
     mascot.blink(s.closed);
     $('eyeState').textContent = s.closed ? 'closed' : s.face ? 'open' : 'no face';
@@ -83,7 +87,9 @@ async function useCamera(deviceId) {
   const video = $('camVideo');
   video.srcObject?.getTracks().forEach((t) => t.stop());
   const hq = $('quality').value !== 'light';
-  const want = hq ? { width: 1280, height: 720, frameRate: 30 } : { width: 640, height: 480, frameRate: 15 };
+  const want = hq
+    ? { width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 }, frameRate: { ideal: 24, max: 24 } }
+    : { width: { ideal: 320, max: 320 }, height: { ideal: 240, max: 240 }, frameRate: { ideal: 15, max: 15 } };
   let stream;
   try { stream = await navigator.mediaDevices.getUserMedia({ video: deviceId ? { ...want, deviceId: { exact: deviceId } } : { ...want, facingMode: 'user' }, audio: false }); }
   catch (e) { if (!deviceId) throw e; stream = await navigator.mediaDevices.getUserMedia({ video: want, audio: false }); }   // saved camera is gone
@@ -123,7 +129,7 @@ async function hardware() {
 async function shareScreen() {
   try {
     const controller = 'CaptureController' in window ? new CaptureController() : undefined;
-    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false, controller, selfBrowserSurface: 'exclude', monitorTypeSurfaces: 'include' });
+    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 30, max: 30 }, width: { max: 1920 }, height: { max: 1080 } }, audio: false, controller, selfBrowserSurface: 'exclude', monitorTypeSurfaces: 'include' });
     const track = stream.getVideoTracks()[0], surface = track.getSettings().displaySurface || 'monitor';
     try { if (surface !== 'monitor') controller?.setFocusBehavior?.('no-focus-change'); } catch {}
     // do not wait for the first frame: a background tab sends none until it is shown
@@ -146,7 +152,7 @@ async function start() {
   if (desktop) {
     // the window is excluded from capture, so a live view of the whole screen does not show itself
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 60 }, width: { max: 1920 } }, audio: false });
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 30, max: 30 }, width: { max: 1920 }, height: { max: 1080 } }, audio: false });
       live.srcObject = stream; live.hidden = false; await live.play();
       fx.setSource(live, { seeThrough: true });
     } catch { /* no capture: the overlay still draws notifications and chaos over the real screen */ }
@@ -176,6 +182,7 @@ async function start() {
 
 function run() {
   running = true;
+  eyes.resume?.();
   const drunk = createDrunk({ world: $('world'), fx, mlg: $('mlg'), toasts: $('toasts') });
   const feed = createFeed($('toasts'), $('chatlog'));
   const ads = createAds($('ads'));
@@ -205,6 +212,7 @@ function run() {
 
   function stop() {
     if (!running) return; running = false; stopRun = null; if (desktop) desktop.overlay(false);
+    eyes.pause?.();
     $('morning').classList.remove('on');
     removeEventListener('pointerdown', onClick); removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs);
     restSound(false); stopMusic(); stopSounds(); ads.clear(); $('credit').textContent = CREDIT; drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
@@ -217,7 +225,10 @@ function run() {
   stopRun = stop;
   function frame(now) {
     if (!running) return;
-    const dt = Math.min(0.1, (now - last) / 1000); last = now; t += dt; total += dt;
+    // Keep high-refresh monitors from multiplying inference/compositing work.
+    if (now - last < 1000 / 60 - 0.5) { requestAnimationFrame(frame); return; }
+    const frameMs = now - last;
+    const dt = Math.min(0.1, frameMs / 1000); last = now; t += dt; total += dt;
     // a glance down at the keyboard reads as closed, so eyes must stay shut for 0.4 s to count
     closedFor = eyes.state.closed ? closedFor + dt : 0;
     const closed = closedFor > 0.4;
@@ -251,7 +262,7 @@ function run() {
       nextToast = t + (2.4 - level * 1.7 + Math.random() * 0.5) * pace;
     }
     // one line every 5 s so slowdowns are visible (npm run desktop prints it in the terminal)
-    perfN++; worst = Math.max(worst, dt * 1000);
+    perfN++; worst = Math.max(worst, frameMs);
     if (now - perfAt > 5000) { console.log(`PERF ${Math.round(perfN * 1000 / (now - perfAt))} fps · worst frame ${worst.toFixed(0)} ms · eye ${eyes.state.ms.toFixed(0)} ms · level ${level.toFixed(2)} · heap ${performance.memory ? Math.round(performance.memory.usedJSHeapSize / 2 ** 20) : '?'} MB · nodes ${document.getElementsByTagName('*').length} · music ${musicState.player} energy ${musicState.energy.toFixed(2)} · ${Math.round(total)} s in`); perfN = 0; perfAt = now; worst = 0; }
     requestAnimationFrame(frame);
   }
@@ -262,7 +273,7 @@ function run() {
 $('toSetup').onclick = setup;
 $('share').onclick = shareScreen;
 $('start').onclick = start;
-$('again').onclick = () => { $('setup').querySelector('.cam').prepend($('camVideo')); show('setup'); watchEyes(); };
+$('again').onclick = () => { $('setup').querySelector('.cam').prepend($('camVideo')); show('setup'); eyes.resume?.(); watchEyes(); };
 $('quality').value = localStorage.getItem('quality') || 'high';
 $('quality').onchange = async (e) => { localStorage.setItem('quality', e.target.value); eyes.setQuality?.(e.target.value); if ($('camVideo').srcObject) { try { await useCamera($('camPick').value || localStorage.getItem('camera') || undefined); } catch {} } };
 $('speed').value = localStorage.getItem('speed') || '12'; $('speed').onchange = (e) => localStorage.setItem('speed', e.target.value);

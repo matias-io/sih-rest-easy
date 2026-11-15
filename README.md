@@ -51,3 +51,5 @@ Third-party material:
 - Air horn: "Sound of American Train Horn Nathan Airchime K5LA" by WeenyBeany, CC BY 4.0, via Wikimedia Commons.
 
 Timed test run: add `?autorun=60&cycle=20` on the web, or `REST_EASY_QUERY="autorun=60&cycle=20" npm run desktop`. It goes through setup, runs for 60 s closing the eyes every 20 s, and prints a `PERF` line every 5 s (fps, worst frame, tracking time, memory).
+
+Performance: eye inference runs in a worker with one frame in flight (adaptive 24 fps High / 15 fps Light), with a throttled main-thread fallback. Camera capture is capped at 640×480 or 320×240; screen capture at 1920×1080/30 fps. The shader uploads only newly decoded frames and reduces resolution as distortion increases. The built-in desktop uses lighter color effects without fullscreen CSS blur; captured screens retain shader blur. End pauses tracking and clears transient timers/audio. Local vendor assets are cached and streamed with byte-range support. `PERF` reports actual worst-frame duration, including stalls longer than 100 ms.

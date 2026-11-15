@@ -27,11 +27,34 @@ function serve(port = 8770) {
         const rel = decodeURIComponent(new URL(req.url, 'http://x').pathname);
         file = path.join(ROOT, rel === '/' ? 'index.html' : rel);
       } catch { res.writeHead(400); res.end('bad request'); return; }
-      if (!file.startsWith(ROOT)) { res.writeHead(403); res.end('forbidden'); return; }   // stay inside web/
-      fs.readFile(file, (err, body) => {
-        if (err) { res.writeHead(404); res.end('not found'); return; }
-        res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
-        res.end(body);
+      if (!file.startsWith(ROOT + path.sep)) { res.writeHead(403); res.end('forbidden'); return; }   // stay inside web/
+      fs.stat(file, (err, stat) => {
+        if (err || !stat.isFile()) { res.writeHead(404); res.end('not found'); return; }
+        const etag = '"' + stat.size.toString(16) + '-' + stat.mtimeMs.toString(16) + '"';
+        const headers = { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream',
+          'Cache-Control': file.startsWith(path.join(ROOT, 'vendor') + path.sep) ? 'public, max-age=3600' : 'no-cache',
+          ETag: etag, 'Accept-Ranges': 'bytes' };
+        const matches = req.headers['if-none-match']?.split(',').some(value => value.trim() === '*' || value.trim().replace(/^W\//, '') === etag);
+        if (matches && (req.method === 'GET' || req.method === 'HEAD')) { res.writeHead(304, headers); res.end(); return; }
+        let start = 0, end = stat.size - 1, status = 200;
+        // A stale If-Range validator must receive the full replacement resource.
+        const range = req.method === 'GET' && (!req.headers['if-range'] || req.headers['if-range'] === etag)
+          ? /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || '') : null;
+        if (range && stat.size) {
+          start = range[1] ? Number(range[1]) : Math.max(0, stat.size - Number(range[2]));
+          end = range[1] && range[2] ? Math.min(end, Number(range[2])) : end;
+          if (start > end || start >= stat.size || (!range[1] && !range[2])) {
+            res.writeHead(416, { ...headers, 'Content-Range': `bytes */${stat.size}` }); res.end(); return;
+          }
+          status = 206; headers['Content-Range'] = `bytes ${start}-${end}/${stat.size}`;
+        }
+        headers['Content-Length'] = Math.max(0, end - start + 1);
+        res.writeHead(status, headers);
+        if (req.method === 'HEAD' || !stat.size) { res.end(); return; }
+        const stream = fs.createReadStream(file, { start, end });
+        stream.on('error', () => res.destroy());
+        res.on('close', () => stream.destroy());
+        stream.pipe(res);
       });
     });
     server.listen(port, '127.0.0.1', () => resolve({ server, url: `http://127.0.0.1:${server.address().port}/` }));
