@@ -1,32 +1,58 @@
-// Music for the deep end: an NCS release, streamed from NoCopyrightSounds' own YouTube upload.
-// Nothing is copied into this repo. Offline, the run is simply without music.
-const ID = 'J2X5mJ3HDYE';   // DEAF KEV - Invincible [NCS Release]
-export const CREDIT = 'Music: DEAF KEV - Invincible [NCS Release], provided by NoCopyrightSounds';
-let frame = null, playing = false, vol = -1, last = 0;
-export const musicState = { ready: false, player: -1 };   // player: YouTube state, 1 = playing
+// The soundtrack, and the pulse everything else moves to.
+// DEAF KEV - Invincible [NCS Release], from NoCopyrightSounds. The track opens quiet for about
+// ten seconds and then drops, which is the shape of a run: usable, then not.
+// The audio goes through an analyser, so the visuals follow what is actually playing.
+const SRC = new URL('../vendor/music/invincible.mp3', import.meta.url).href;
+export const CREDIT = 'Music: DEAF KEV - Invincible [NCS Release], provided by NoCopyrightSounds · Photo: Sam Altman by TechCrunch, CC BY 2.0 · Horn: WeenyBeany, CC BY 4.0';
+let audio = null, ctx = null, an = null, gain = null, buf = null, avg = 0.3, lastBeat = 0;
+// energy 0..1: how loud the music is now. kick 1..0: jumps on each beat, then decays.
+// mode / seed: which glitch the screen does on the beat, re-rolled on some beats.
+export const musicState = { ready: false, player: -1, energy: 0, kick: 0, beat: false, mode: 0, seed: 0 };
 
-const send = (func, args = []) => frame?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), '*');
-addEventListener('message', (e) => {
-  if (!frame || e.source !== frame.contentWindow) return;
-  try { const d = JSON.parse(e.data); if (d.event === 'onReady' || d.info) musicState.ready = true; if (d.info?.playerState != null) musicState.player = d.info.playerState; } catch {}
-});
-
-// call from the Start click, so the browser lets it play later
+// call early (setup screen) so the file is already buffered when the run starts
 export function loadMusic() {
-  if (frame || !navigator.onLine) return;
-  frame = document.createElement('iframe'); frame.className = 'music'; frame.tabIndex = -1; frame.allow = 'autoplay; encrypted-media';
-  frame.referrerPolicy = 'strict-origin-when-cross-origin';
-  frame.src = `https://www.youtube-nocookie.com/embed/${ID}?enablejsapi=1&controls=0&playsinline=1&start=50&loop=1&playlist=${ID}&origin=${encodeURIComponent(location.origin)}`;
-  frame.onload = () => frame.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*');
-  document.body.append(frame);
+  if (audio) return;
+  audio = new Audio(SRC); audio.loop = true; audio.preload = 'auto';
+  audio.addEventListener('canplaythrough', () => { musicState.ready = true; }, { once: true });
+  audio.load();
 }
 
-// amount 0..1: silent at 0, louder as the screen goes
-export function music(amount, now) {
-  if (!frame) return;
-  const want = amount > 0;
-  if (want !== playing || (want && musicState.player !== 1 && now - last > 1500)) { playing = want; last = now; send(want ? 'playVideo' : 'pauseVideo'); }
-  const v = Math.round(amount * 14) * 5;
-  if (want && v !== vol) { vol = v; send('setVolume', [v]); }
+// call from the Start click
+export function startMusic() {
+  loadMusic();
+  try {
+    if (!ctx) {
+      ctx = new AudioContext();
+      const src = ctx.createMediaElementSource(audio);
+      an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0.5;
+      gain = ctx.createGain(); gain.gain.value = 0.25;
+      src.connect(an); an.connect(gain); gain.connect(ctx.destination);
+      buf = new Uint8Array(an.frequencyBinCount);
+    }
+    ctx.resume(); audio.currentTime = 0; audio.play().catch(() => {});
+  } catch {}
 }
-export function stopMusic() { playing = false; vol = -1; send('pauseVideo'); }
+
+// once per frame. level 0..1, closed = resting, t seconds, dt seconds
+export function music(level, closed, t, dt) {
+  const s = musicState; let bass, e;
+  const live = !!an && !audio.paused && audio.currentTime > 0;
+  s.player = live ? 1 : 2;
+  if (live) {
+    an.getByteFrequencyData(buf);
+    let b = 0, a = 0; for (let i = 1; i < 8; i++) b += buf[i]; for (let i = 0; i < 200; i++) a += buf[i];
+    bass = b / 7 / 255; e = Math.min(1, Math.max(0, (a / 200 / 255 - 0.12) * 1.9));
+    gain.gain.value += ((closed ? 0.1 : 0.25 + 0.75 * level) - gain.gain.value) * 0.08;   // quieter while you rest
+  } else {
+    // no audio (blocked or still loading): a 128 bpm stand-in so the screen still has a pulse
+    bass = (t * 2.13) % 1 < 0.15 ? 1 : 0.3; e = 0.6 + 0.3 * Math.sin(t * 0.5);
+  }
+  s.energy += (e - s.energy) * 0.12;
+  avg += (bass - avg) * 0.03;
+  const gap = t - lastBeat;
+  s.beat = (bass > avg * 1.2 && bass > 0.45 && gap > 0.22) || (s.energy > 0.55 && gap > 0.47);
+  if (s.beat) { lastBeat = t; s.kick = 1; if (Math.random() < 0.4) { s.mode = Math.floor(Math.random() * 8); s.seed = Math.random() * 100; } }
+  else s.kick *= Math.exp(-7 * dt);
+  return s;
+}
+export function stopMusic() { audio?.pause(); musicState.kick = 0; }

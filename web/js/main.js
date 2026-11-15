@@ -2,7 +2,8 @@ import { createEyes, keyboardEyes } from './eyes.js';
 import { createDrunk } from './drunk.js';
 import { createFx } from './fx.js';
 import { createFeed } from './feed.js';
-import { loadMusic, music, stopMusic, musicState, CREDIT } from './music.js';
+import { loadMusic, startMusic, music, stopMusic, musicState, CREDIT } from './music.js';
+import { createAds } from './ads.js';
 import { initAudio, ding, rest as restSound, wake, probeSystemSounds } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -26,7 +27,7 @@ function check(key, cls, text) {
 }
 
 async function setup() {
-  show('setup');
+  show('setup'); loadMusic();
   const brand = navigator.userAgentData?.brands?.find((b) => !/Not/.test(b.brand))?.brand || (/(Firefox|Safari|Chrome)/.exec(navigator.userAgent) || ['browser'])[0];
   check('browser', document.fullscreenEnabled ? 'ok' : 'bad', `${brand} on ${navigator.userAgentData?.platform || navigator.platform}`);
   check('display', 'ok', `${screen.width}×${screen.height} at ${devicePixelRatio}x`);
@@ -134,7 +135,7 @@ async function shareScreen() {
 const fx = createFx($('fx'));
 
 async function start() {
-  initAudio(); loadMusic();
+  initAudio(); startMusic();
   const bg = $('bg'), live = $('liveBg'), desk = $('desk');
   bg.className = ''; live.hidden = true; desk.hidden = true; fx.clear();
   $('facecam').prepend($('camVideo'));   // the face cam rides along in the corner
@@ -174,6 +175,8 @@ function run() {
   running = true;
   const drunk = createDrunk({ world: $('world'), fx, mlg: $('mlg'), toasts: $('toasts') });
   const feed = createFeed($('toasts'), $('chatlog'));
+  const ads = createAds($('ads'));
+  let samAt = 12 + Math.random() * 12;   // he shows up at least once in a one-minute run
   const pin = parseFloat(params.get('level')) || 0;   // rehearsal: ?level=0.8 starts there
   // seconds of open eyes from sober to fully gone: ?rise=20 in the URL, or the Speed menu
   const RISE_S = Math.max(3, parseFloat(params.get('rise')) || parseFloat($('speed').value) || 12);
@@ -201,7 +204,7 @@ function run() {
     if (!running) return; running = false; stopRun = null; if (desktop) desktop.overlay(false);
     $('morning').classList.remove('on');
     removeEventListener('pointerdown', onClick); removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs);
-    restSound(false); stopMusic(); $('credit').textContent = musicState.ready ? CREDIT : ''; drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
+    restSound(false); stopMusic(); ads.clear(); $('credit').textContent = CREDIT; drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
     $('liveBg').srcObject?.getTracks().forEach((x) => x.stop()); $('liveBg').srcObject = null; fx.clear(); share = null;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     $('endTime').textContent = fmt(total); $('endBac').textContent = (peak * 0.4).toFixed(2); $('endRests').textContent = rests;
@@ -221,7 +224,8 @@ function run() {
       if (level === 0 && !belled) { belled = true; awake = 0; ding(); }   // the bell: fully sober, you can open them
     } else {
       if (wasClosed) { wasClosed = false; rests++; wake(); greet(t - restStart, levelAtClose - level); }
-      level = Math.min(1, level + dt / RISE_S); awake += dt;
+      // a few usable seconds, then it goes fast
+      level = Math.min(1, level + dt / RISE_S * (level < 0.12 ? 0.4 : 1.7)); awake += dt;
     }
     peak = Math.max(peak, level);
     $('rest').classList.toggle('on', closed);
@@ -230,8 +234,10 @@ function run() {
     const face = closed ? 'resting' : eyes.state.delegate === 'keyboard' ? 'Space = rest' : eyes.state.face ? 'open' : 'no face';
     if (ring + face !== lastRing) { lastRing = ring + face; $('hud').style.setProperty('--ring', ring); $('facecam').style.setProperty('--ring', closed ? 'var(--accent)' : ring); $('faceState').textContent = face; }
 
-    drunk.render(t, level);
-    music(closed ? 0 : Math.max(0, level - 0.6) / 0.4, now);   // fades in for the last stretch, cuts when you rest
+    const m = music(level, closed, t, dt);
+    drunk.render(t, level, m);
+    ads.tick(t, level, m.energy);
+    if (!closed && level > 0.3 && t > samAt) { drunk.sam(); samAt = t + 16 + Math.random() * 16; }
     const hudText = 'awake ' + fmt(awake) + '|BAC ' + (level * 0.4).toFixed(2);
     if (hudText !== lastHud) { lastHud = hudText; [$('hudAwake').textContent, $('hudBac').textContent] = hudText.split('|'); }
 
@@ -243,7 +249,7 @@ function run() {
     }
     // one line every 5 s so slowdowns are visible (npm run desktop prints it in the terminal)
     perfN++; worst = Math.max(worst, dt * 1000);
-    if (now - perfAt > 5000) { console.log(`PERF ${Math.round(perfN * 1000 / (now - perfAt))} fps · worst frame ${worst.toFixed(0)} ms · eye ${eyes.state.ms.toFixed(0)} ms · level ${level.toFixed(2)} · heap ${performance.memory ? Math.round(performance.memory.usedJSHeapSize / 2 ** 20) : '?'} MB · nodes ${document.getElementsByTagName('*').length} · music ${musicState.player} · ${Math.round(total)} s in`); perfN = 0; perfAt = now; worst = 0; }
+    if (now - perfAt > 5000) { console.log(`PERF ${Math.round(perfN * 1000 / (now - perfAt))} fps · worst frame ${worst.toFixed(0)} ms · eye ${eyes.state.ms.toFixed(0)} ms · level ${level.toFixed(2)} · heap ${performance.memory ? Math.round(performance.memory.usedJSHeapSize / 2 ** 20) : '?'} MB · nodes ${document.getElementsByTagName('*').length} · music ${musicState.player} energy ${musicState.energy.toFixed(2)} · ${Math.round(total)} s in`); perfN = 0; perfAt = now; worst = 0; }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

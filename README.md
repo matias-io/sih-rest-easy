@@ -43,6 +43,9 @@ Brand icons in `web/vendor/icons` are from simple-icons (CC0); the brands belong
 
 Sounds in `web/vendor/sounds` are Android system sounds from the Android Open Source Project (Google), Apache License 2.0.
 
-Music in the last stretch is DEAF KEV - Invincible [NCS Release], streamed from NoCopyrightSounds' own YouTube upload. No music file is in this repo, and offline the run is silent.
+Third-party material:
+- Music: DEAF KEV - Invincible [NCS Release], provided by NoCopyrightSounds (`web/vendor/music`). The screen follows it through an audio analyser: calm in the quiet intro, chaos at the drop.
+- Photo: Sam Altman at TechCrunch Disrupt SF 2019, by TechCrunch, CC BY 2.0, via Wikimedia Commons (`web/vendor/img/sam.jpg`). Parody use.
+- Air horn: "Sound of American Train Horn Nathan Airchime K5LA" by WeenyBeany, CC BY 4.0, via Wikimedia Commons.
 
 Timed test run: add `?autorun=60&cycle=20` on the web, or `REST_EASY_QUERY="autorun=60&cycle=20" npm run desktop`. It goes through setup, runs for 60 s closing the eyes every 20 s, and prints a `PERF` line every 5 s (fps, worst frame, tracking time, memory).
