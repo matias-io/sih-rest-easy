@@ -161,8 +161,8 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 html.desktop, body.desktop, body.desktop #stage { background:transparent; }
 body.desktop .screen { background:var(--bg); }
 /* Decorative layers start translucent on the real desktop; drunk.js raises them with BAC. */
-body.desktop #mlg, body.desktop #ads { opacity:.25; }
-body.desktop #toasts { opacity:.65; }
+body.desktop #ads { opacity:.25; }
+body.desktop #toasts { opacity:1; }
 
 /* Drunk overlays (haze.js): above the ads, under the jokes and the HUD, never clickable. */
 .haze { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:3; visibility:hidden; contain:layout paint style; }
