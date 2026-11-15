@@ -3,16 +3,26 @@
 // 2 unhinged, 3 MLG.
 import { notify } from './audio.js';
 
-const tile = (bg, glyph, fg = '#fff', size = 11) => `<span class="ti" style="background:${bg};color:${fg};font-size:${size}px">${glyph}</span>`;
+// Real brand marks (simple-icons, CC0) on each brand's own colour, the way Windows shows them.
+const ICONS = new URL('../vendor/icons/', import.meta.url).href;
+const icon = (bg, file) => `<span class="ti" style="background:${bg}"><img src="${ICONS}${file}.svg" alt=""></span>`;
+const text = (bg, glyph, fg = '#fff') => `<span class="ti" style="background:${bg};color:${fg};font-size:9px">${glyph}</span>`;
 const SLACK = `<svg viewBox="0 0 24 24" class="ti"><rect x="7" y="2" width="3.6" height="20" rx="1.8" fill="#E01E5A"/><rect x="13.4" y="2" width="3.6" height="20" rx="1.8" fill="#2EB67D"/><rect x="2" y="7" width="20" height="3.6" rx="1.8" fill="#36C5F0"/><rect x="2" y="13.4" width="20" height="3.6" rx="1.8" fill="#ECB22E"/></svg>`;
+// name, icon, chat (shows the sender's avatar and, for Teams, the quick-reply box)
 const APPS = {
-  slack: ['Slack', SLACK], teams: ['Microsoft Teams', tile('#5059C9', 'T', '#fff', 12)], outlook: ['Outlook', tile('#0078D4', 'O', '#fff', 12)],
-  github: ['GitHub', tile('#0d1117', 'GH', '#fff', 8)], jira: ['Jira', tile('#0052CC', '◆')], pager: ['PagerDuty', tile('#06AC38', 'P', '#fff', 12)],
-  vercel: ['Vercel', tile('#000', '▲', '#fff', 9)], aws: ['AWS Billing', tile('#232F3E', 'aws', '#FF9900', 7)], claude: ['Claude', tile('#D97757', '✳', '#fff', 12)],
-  cursor: ['Cursor', tile('#111', '◩')], cf: ['Cloudflare', tile('#F38020', '☁', '#fff', 11)], npm: ['npm', tile('#CB3837', 'npm', '#fff', 7)],
-  linkedin: ['LinkedIn', tile('#0A66C2', 'in', '#fff', 10)], zoom: ['Zoom', tile('#0B5CFF', '▶', '#fff', 9)], docker: ['Docker Desktop', tile('#1D63ED', '🐳', '#fff', 10)],
-  win: ['Windows Update', tile('#0067C0', '⊞', '#fff', 12)], cal: ['Calendar', tile('#D83B01', '31', '#fff', 8)], chatgpt: ['ChatGPT', tile('#0d0d0d', '֎', '#fff', 11)],
-  nvidia: ['NVIDIA App', tile('#76B900', 'N', '#000', 12)], so: ['Stack Overflow', tile('#F48024', '≡')], mlg: ['xX_N0T1FY_Xx', tile('#0d0', '420', '#000', 7)]
+  slack: ['Slack', SLACK, 'chat'], teams: ['Microsoft Teams', icon('#5059C9', 'microsoftteams'), 'teams'], outlook: ['Outlook', icon('#0078D4', 'microsoftoutlook'), 'chat'],
+  github: ['GitHub', icon('#181717', 'github')], jira: ['Jira', icon('#0052CC', 'jira')], pager: ['PagerDuty', icon('#06AC38', 'pagerduty')],
+  vercel: ['Vercel', icon('#000', 'vercel')], aws: ['AWS Billing', icon('#232F3E', 'amazonaws')], claude: ['Claude', icon('#D97757', 'anthropic')],
+  cursor: ['Cursor', text('#111', '◩')], cf: ['Cloudflare', icon('#F38020', 'cloudflare')], npm: ['npm', icon('#CB3837', 'npm')],
+  linkedin: ['LinkedIn', icon('#0A66C2', 'linkedin')], zoom: ['Zoom', icon('#0B5CFF', 'zoom')], docker: ['Docker Desktop', icon('#2496ED', 'docker')],
+  win: ['Windows Update', icon('#0078D4', 'windows11')], cal: ['Google Calendar', icon('#4285F4', 'googlecalendar')], chatgpt: ['ChatGPT', icon('#0d0d0d', 'openai'), 'chat'],
+  nvidia: ['NVIDIA App', icon('#76B900', 'nvidia')], so: ['Stack Overflow', icon('#F58025', 'stackoverflow')], mlg: ['xX_N0T1FY_Xx', text('#0d0', '420', '#000')]
+};
+const AVATAR = ['#c239b3', '#0f6cbd', '#107c10', '#d83b01', '#8764b8', '#038387', '#ca5010'];
+const avatar = (who) => {
+  const name = who.replace(/\s*\(.*$/, '').replace(/ is calling.*$/, ''), init = name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return `<span class="av" style="background:${AVATAR[h % AVATAR.length]}">${init}</span>`;
 };
 
 // [app, title, body, buttons?]
@@ -20,6 +30,7 @@ const FEED = [
   [ // 0: a normal workday
     ['slack', 'Priya (#general)', 'standup in 5, cameras on pls'],
     ['teams', 'Dave is calling you', 'Incoming video call', ['Accept', 'Decline']],
+    ['teams', 'Dave (Manager)', 'quick sync? 2 min'],
     ['github', 'dependabot[bot]', 'opened 47 pull requests in your-org/monolith'],
     ['outlook', 'IT Helpdesk', 'Your password expires in 3 days'],
     ['jira', 'SIH-1763', 'Dave moved "Quick fix" from In Progress to In Progress'],
@@ -69,11 +80,12 @@ export function createFeed(box, chatlog) {
   const used = FEED.map(() => 0);
   function push(tier) {
     const list = FEED[tier], [app, who, msg, buttons] = list[used[tier]++ % list.length];
-    const [name, icon] = APPS[app];
+    const [name, mark, kind] = APPS[app];
     const el = document.createElement('div');
     el.className = 'toast' + (tier === 3 ? ' dank' : '');
-    el.innerHTML = `<div class="th">${icon}<span class="app"></span><span class="x">✕</span></div><div class="who"></div><div class="msg"></div>`;
+    el.innerHTML = `<div class="th">${mark}<span class="app"></span><span class="x">✕</span></div><div class="row">${kind ? avatar(who) : ''}<div><div class="who"></div><div class="msg"></div></div></div>`;
     el.querySelector('.app').textContent = name; el.querySelector('.who').textContent = who; el.querySelector('.msg').textContent = msg;
+    if (kind === 'teams' && !buttons) { const r = document.createElement('div'); r.className = 'reply'; r.innerHTML = '<span>Send a quick reply</span><span>➤</span>'; el.append(r); }
     if (buttons) { const row = document.createElement('div'); row.className = 'acts'; for (const b of buttons) { const btn = document.createElement('button'); btn.textContent = b; btn.className = /Accept|Join/.test(b) ? 'go' : /Decline/.test(b) ? 'no' : ''; row.append(btn); } el.append(row); }
     const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 300); };
     el.onclick = close; setTimeout(close, 7000);

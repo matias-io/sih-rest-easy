@@ -4,7 +4,7 @@ import { createFeed } from './feed.js';
 import { initAudio, ding, rest as restSound } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
-const RISE_S = 34;    // seconds of open eyes from sober to fully gone
+const params = new URLSearchParams(location.search);
 const FALL_S = 2.6;   // seconds of closed eyes to fully sober
 const show = (id) => { for (const s of ['intro', 'setup', 'stage', 'end']) $(s).hidden = s !== id; };
 const fmt = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
@@ -29,7 +29,7 @@ async function setup() {
   check('browser', document.fullscreenEnabled ? 'ok' : 'bad', `${brand} on ${navigator.userAgentData?.platform || navigator.platform}`);
   check('display', 'ok', `${screen.width}×${screen.height} at ${devicePixelRatio}x`);
   check('browser', document.fullscreenEnabled ? 'ok' : 'bad', desktop ? `Desktop app (Electron ${(/Electron\/([\d.]+)/.exec(navigator.userAgent) || [])[1] || ''}, Chromium ${(/Chrome\/(\d+)/.exec(navigator.userAgent) || [])[1] || ''})` : null);
-  if (desktop) check('screen', 'ok', 'live overlay on your real desktop (Ctrl+Shift+X stops it)');
+  if (desktop) desktop.stopKeys().then((keys) => check('screen', 'ok', `live overlay on your real desktop · stop: End button${keys.length ? ' or ' + keys.join(' / ') : ''}`));
   else if (!navigator.mediaDevices?.getDisplayMedia) check('screen', '', 'not supported here, using the built-in desktop');
 
   hardware();
@@ -133,7 +133,7 @@ async function start() {
   bg.className = ghost.className = ''; bg.style.backgroundImage = ghost.style.backgroundImage = ''; live.hidden = true; desk.hidden = true;
 
   // keep the camera video rendering while the setup screen is hidden
-  const cam = $('camVideo'); Object.assign(cam.style, { position: 'fixed', width: '2px', height: '2px', opacity: '0.01', left: '0', top: '0' }); $('stage').appendChild(cam);
+  $('facecam').prepend($('camVideo'));   // the face cam rides along in the corner
 
   ghost.replaceChildren();
   if (desktop) {
@@ -172,8 +172,22 @@ function run() {
   running = true;
   const drunk = createDrunk({ world: $('world'), ghost: $('ghost'), mlg: $('mlg'), toasts: $('toasts') });
   const feed = createFeed($('toasts'), $('chatlog'));
-  const pin = parseFloat(new URLSearchParams(location.search).get('level')) || 0;   // rehearsal: ?level=0.8 starts there
-  let level = pin, peak = 0, awake = 0, total = 0, rests = 0, rested = true, nextToast = 2.5, last = performance.now(), t = 0, closedFor = 0;
+  const pin = parseFloat(params.get('level')) || 0;   // rehearsal: ?level=0.8 starts there
+  // seconds of open eyes from sober to fully gone: ?rise=20 in the URL, or the Speed menu
+  const RISE_S = Math.max(3, parseFloat(params.get('rise')) || parseFloat($('speed').value) || 12);
+  const pace = Math.min(2, Math.max(0.6, RISE_S / 14));   // notifications keep up with the speed
+  let level = pin, peak = 0, awake = 0, total = 0, rests = 0, nextToast = 1.2, last = performance.now(), t = 0, closedFor = 0;
+  let wasClosed = false, restStart = 0, levelAtClose = 0, belled = false;
+  const GREET = ['nice rest', 'good morning', 'welcome back', 'rise and shine', 'power nap complete', 'eyelids: rebooted', 'that was a blink, technically'];
+  const greet = (secs, recovered) => {
+    const m = $('morning'); m.style.setProperty('--c', `hsl(${Math.floor(Math.random() * 360)} 95% 68%)`);
+    m.querySelector('b').textContent = GREET[Math.floor(Math.random() * GREET.length)];
+    m.querySelector('span').textContent = `rested ${secs.toFixed(1)} s · recovered ${(recovered * 0.4).toFixed(2)} BAC`;
+    m.classList.remove('on'); void m.offsetWidth; m.classList.add('on');
+  };
+  $('endBtn').onclick = () => stop();
+  // desktop: the overlay ignores the mouse, except over our own controls
+  if (desktop) { const r = $('hud').getBoundingClientRect(); desktop.hitBox({ x: r.left - 6, y: r.top - 6, w: r.width + 12, h: r.height + 12 }); }
 
   const onClick = (e) => { if (level > 0.72) drunk.hit(e.clientX, e.clientY); };
   const onKey = (e) => { if (e.key === ']') level = Math.min(1, level + 0.15); if (e.key === 'Escape' && !document.fullscreenElement) stop(); };
@@ -182,6 +196,7 @@ function run() {
 
   function stop() {
     if (!running) return; running = false; stopRun = null; if (desktop) desktop.overlay(false);
+    $('morning').classList.remove('on');
     removeEventListener('pointerdown', onClick); removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs);
     restSound(false); drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
     $('liveBg').srcObject?.getTracks().forEach((x) => x.stop()); share = null;
@@ -198,26 +213,29 @@ function run() {
     closedFor = eyes.state.closed ? closedFor + dt : 0;
     const closed = closedFor > 0.4;
     if (closed) {
+      if (!wasClosed) { wasClosed = true; restStart = t - closedFor; levelAtClose = level; belled = false; }
       level = Math.max(0, level - dt / FALL_S);
-      if (level === 0 && !rested) { rested = true; rests++; awake = 0; ding(); }
+      if (level === 0 && !belled) { belled = true; awake = 0; ding(); }   // the bell: fully sober, you can open them
     } else {
-      if (rested && level === 0 && total > 1 && rests > 0 && !$('morning').classList.contains('on')) { $('morning').classList.add('on'); setTimeout(() => $('morning').classList.remove('on'), 1700); }
-      level = Math.min(1, level + dt / RISE_S); awake += dt; if (level > 0.02) rested = false;
+      if (wasClosed) { wasClosed = false; rests++; greet(t - restStart, levelAtClose - level); }
+      level = Math.min(1, level + dt / RISE_S); awake += dt;
     }
     peak = Math.max(peak, level);
-    $('rest').classList.toggle('on', closed && !rested);
-    restSound(closed && !rested);
+    $('rest').classList.toggle('on', closed);
+    restSound(closed && level > 0);
+    const ring = level < 0.3 ? 'var(--ok)' : level < 0.7 ? '#ffd166' : 'var(--bad)';
+    $('hud').style.setProperty('--ring', ring); $('facecam').style.setProperty('--ring', closed ? 'var(--accent)' : ring);
+    $('faceState').textContent = closed ? 'resting' : eyes.state.delegate === 'keyboard' ? 'Space = rest' : eyes.state.face ? 'open' : 'no face';
 
     drunk.render(t, level);
     $('hudAwake').textContent = 'awake ' + fmt(awake);
-    $('hudBac').textContent = 'screen BAC ' + (level * 0.4).toFixed(2);
-    $('hudBac').style.color = level < 0.3 ? 'var(--ok)' : level < 0.7 ? '#ffd166' : 'var(--bad)';
+    $('hudBac').textContent = 'BAC ' + (level * 0.4).toFixed(2);
 
     if (!closed && t > nextToast) {
       let tier = level < 0.14 ? 0 : level < 0.42 ? 1 : level < 0.72 ? 2 : 3;
       if (tier > 0 && Math.random() < 0.25) tier--;
       feed.push(tier);
-      nextToast = t + 4.2 - level * 3.2 + Math.random() * 0.8;
+      nextToast = t + (2.4 - level * 1.7 + Math.random() * 0.5) * pace;
     }
     requestAnimationFrame(frame);
   }
@@ -228,7 +246,8 @@ function run() {
 $('toSetup').onclick = setup;
 $('share').onclick = shareScreen;
 $('start').onclick = start;
-$('again').onclick = () => { $('setup').querySelector('.cam').prepend($('camVideo')); $('camVideo').removeAttribute('style'); show('setup'); watchEyes(); };
+$('again').onclick = () => { $('setup').querySelector('.cam').prepend($('camVideo')); show('setup'); watchEyes(); };
+$('speed').value = localStorage.getItem('speed') || '12'; $('speed').onchange = (e) => localStorage.setItem('speed', e.target.value);
 
 const inField = (e) => /INPUT|TEXTAREA/.test(e.target.tagName);
 addEventListener('keydown', (e) => { if (e.code === 'Space' && !inField(e)) { e.preventDefault(); if (!e.repeat) eyes.force(true); } });

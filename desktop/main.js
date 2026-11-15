@@ -7,7 +7,7 @@ const { app, BrowserWindow, desktopCapturer, globalShortcut, ipcMain, screen, se
 const { serve } = require('./serve');
 
 const SMOKE = process.env.REST_EASY_SMOKE === '1';   // CI-style check: no window shown, prints a result, exits
-const STOP_KEY = 'CommandOrControl+Shift+X';
+const STOP_KEYS = ['CommandOrControl+Shift+X', 'CommandOrControl+Alt+X', 'F9'];
 let win;
 
 app.whenReady().then(async () => {
@@ -18,7 +18,7 @@ app.whenReady().then(async () => {
   session.defaultSession.setPermissionRequestHandler((_wc, perm, cb) => cb(['media', 'fullscreen'].includes(perm)));
   session.defaultSession.setPermissionCheckHandler((_wc, perm) => ['media', 'fullscreen'].includes(perm));
   session.defaultSession.setDisplayMediaRequestHandler(async (_req, cb) => {
-    const sources = await desktopCapturer.getSources({ types: ['screen'] });
+    const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 0, height: 0 } });   // no thumbnails: they made Start take 15 s
     cb({ video: sources.find((s) => s.display_id === String(display.id)) || sources[0] });
   });
 
@@ -27,19 +27,43 @@ app.whenReady().then(async () => {
     skipTaskbar: false, backgroundColor: '#00000000',
     webPreferences: { preload: require('node:path').join(__dirname, 'preload.js'), backgroundThrottling: false }
   });
-  win.setContentProtection(true);   // keep this window out of its own screen capture
+  // keep this window out of its own screen capture (REST_EASY_VISIBLE=1 turns that off for screenshots and testing)
+  if (process.env.REST_EASY_VISIBLE !== '1') win.setContentProtection(true);
   win.loadURL(url + '?desktop=1' + (SMOKE ? '&smoke=1' : ''));
 
-  ipcMain.handle('overlay', (_e, on) => {
+  // overlay on: cover the desktop, stay above everything, let the mouse and keyboard through.
+  // The page asks for the mouse back only while the pointer is over its own controls (the End button).
+  let overlayOn = false, keepTop = null;
+  const setOverlay = (on) => {
+    overlayOn = on; clearInterval(keepTop);
+    win.setIgnoreMouseEvents(on, { forward: true });
+    win.setFocusable(!on);                       // typing goes to the real apps, and Alt+Tab skips us
+    win.setSkipTaskbar(on);
     win.setAlwaysOnTop(on, 'screen-saver');
-    win.setIgnoreMouseEvents(on);          // clicks and scroll go to the real apps underneath
-    win.setFocusable(!on);                 // so does typing
-    if (on) { win.setBounds(display.bounds); win.showInactive(); } else { win.show(); win.focus(); }
-  });
+    if (on) {
+      win.setBounds(display.bounds); win.showInactive(); win.moveTop();
+      keepTop = setInterval(() => { if (!win.isDestroyed()) { win.setAlwaysOnTop(true, 'screen-saver'); win.moveTop(); } }, 1000);
+    } else { win.show(); win.focus(); }
+  };
+  ipcMain.handle('overlay', (_e, on) => setOverlay(on));
+  let hitBox = null;   // screen rectangle of the page's own controls, in DIPs
+  ipcMain.on('hitBox', (_e, box) => { hitBox = box; });
+  setInterval(() => {
+    if (!overlayOn || !hitBox || win.isDestroyed()) return;
+    const p = screen.getCursorScreenPoint(), b = win.getBounds();
+    const over = p.x - b.x >= hitBox.x && p.x - b.x <= hitBox.x + hitBox.w && p.y - b.y >= hitBox.y && p.y - b.y <= hitBox.y + hitBox.h;
+    win.setIgnoreMouseEvents(!over, { forward: true });
+  }, 40);
+  // stop keys are handled here, in the main process, so they work even if the page is stuck
+  const stopNow = () => { if (overlayOn) { setOverlay(false); win.webContents.send('stop'); } };
+  // another app may already own a shortcut, so try several and tell the page which ones we got
+  const stopKeys = STOP_KEYS.filter((key) => globalShortcut.register(key, stopNow));
+  ipcMain.handle('stopKeys', () => stopKeys.map((k) => k.replace('CommandOrControl', process.platform === 'darwin' ? 'Cmd' : 'Ctrl')));
+  globalShortcut.register('CommandOrControl+Shift+Q', () => app.quit());
   ipcMain.handle('quit', () => app.quit());
   ipcMain.handle('hardware', () => { const os = require('node:os'); return { cpu: os.cpus()[0].model.replace(/\s+/g, ' ').trim(), cores: os.cpus().length, ramGb: Math.round(os.totalmem() / 2 ** 30) }; });
-  globalShortcut.register(STOP_KEY, () => win.webContents.send('stop'));
 
+  win.webContents.on('console-message', (e) => { if (e.level === 'error' || e.level === 3) console.log('[page] ' + e.message); });
   if (SMOKE) {
     win.webContents.on('console-message', (e) => { const msg = e.message || ''; if (msg.startsWith('SMOKE ')) { console.log(msg); app.quit(); } });
     setTimeout(() => { console.log('SMOKE timeout'); app.quit(); }, 25000);

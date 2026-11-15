@@ -1,7 +1,7 @@
 // Tiny static server for the shared web app. Used by `npm run web` and by the desktop app.
 const http = require('node:http'), fs = require('node:fs'), path = require('node:path');
 const ROOT = path.join(__dirname, '..', 'web');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.task': 'application/octet-stream' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.svg': 'image/svg+xml', '.task': 'application/octet-stream' };
 
 function serve(port = 8770) {
   return new Promise((resolve) => {
