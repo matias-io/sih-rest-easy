@@ -3,8 +3,7 @@ import { hitmarker, airhorn } from './audio.js';
 
 const POPS = ['WOW', '360', 'MLG', 'SAMPLE TEXT', '+100', 'OHHHH', 'NO SLEEP', 'GET REKT', 'BLINK = NOOB', '420 FPS'];
 
-export function createDrunk({ world, ghost, mlg, toasts }) {
-  const warpMap = document.getElementById('warpMap'), warpNoise = document.getElementById('warpNoise');
+export function createDrunk({ world, fx, mlg, toasts }) {
   const rainbow = document.createElement('div'); rainbow.className = 'rainbow'; mlg.appendChild(rainbow);
   let nextGag = 0, shake = 0;
 
@@ -38,23 +37,20 @@ export function createDrunk({ world, ghost, mlg, toasts }) {
     // notifications sway with the room but stay sharp, so the jokes stay readable
     toasts.style.transform = `translate(${(dx * 0.5).toFixed(1)}px,${(dy * 0.5).toFixed(1)}px) rotate(${(rot * 0.6).toFixed(2)}deg)`;
 
-    const blur = sway * 1.1 + Math.max(0, Math.sin(t * 0.8)) * deep * 1.6;
-    const hue = deep * Math.sin(t * 0.6) * 70 + mlgAmt * ((t * 240) % 360);
-    const useWarp = level > 0.3;
-    world.style.filter = `blur(${blur.toFixed(2)}px) saturate(${1 + deep * 1.2 + mlgAmt * 2}) hue-rotate(${hue.toFixed(0)}deg) contrast(${1 + mlgAmt * 0.5})${useWarp ? ' url(#warp)' : ''}`;
-    if (useWarp) {
-      warpMap.setAttribute('scale', ((level - 0.3) * 110).toFixed(1));
-      warpNoise.setAttribute('baseFrequency', `${(0.004 + Math.sin(t * 0.3) * 0.0015).toFixed(5)} ${(0.009 + Math.cos(t * 0.4) * 0.003).toFixed(5)}`);
+    if (fx.active) {
+      fx.draw(t, level);            // picture or live video: everything happens on the GPU
+      world.style.filter = '';
+    } else {
+      // built-in desktop (real DOM): compositor-only filters, nothing that needs the CPU
+      const blur = sway * 1.1 + Math.max(0, Math.sin(t * 0.8)) * deep * 1.6;
+      const hue = deep * Math.sin(t * 0.6) * 70 + mlgAmt * ((t * 240) % 360);
+      world.style.filter = level < 0.08 ? '' : `blur(${blur.toFixed(2)}px) saturate(${(1 + deep * 1.2 + mlgAmt * 2).toFixed(2)}) hue-rotate(${hue.toFixed(0)}deg)`;
     }
-
-    // double vision
-    ghost.style.opacity = Math.min(0.55, sway * 0.75).toFixed(2);
-    ghost.style.transform = `translate(${(Math.sin(t * 1.4) * sway * 46).toFixed(1)}px, ${(Math.cos(t * 1.1) * sway * 18).toFixed(1)}px)`;
 
     rainbow.style.opacity = (mlgAmt * 0.35).toFixed(2);
     if (mlgAmt > 0 && t > nextGag) { gag(); nextGag = t + rnd(0.25, 1.1 - mlgAmt * 0.6); }
   }
 
-  function reset() { toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; ghost.style.opacity = 0; rainbow.style.opacity = 0; }
+  function reset() { toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
   return { render, reset, hit };
 }

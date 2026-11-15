@@ -1,7 +1,8 @@
 import { createEyes, keyboardEyes } from './eyes.js';
 import { createDrunk } from './drunk.js';
+import { createFx } from './fx.js';
 import { createFeed } from './feed.js';
-import { initAudio, ding, rest as restSound } from './audio.js';
+import { initAudio, ding, rest as restSound, wake, probeSystemSounds } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -33,6 +34,7 @@ async function setup() {
   else if (!navigator.mediaDevices?.getDisplayMedia) check('screen', '', 'not supported here, using the built-in desktop');
 
   hardware();
+  probeSystemSounds().then((ok) => { const li = document.querySelector('#checks [data-k="sound"]'); li.className = 'ok'; li.querySelector('span').textContent = ok ? 'the notification sounds of this computer + official Android sounds' : 'official Android system sounds (Google, Apache 2.0)'; });
   check('camera', 'wait'); check('tracker', 'wait');
   $('start').disabled = false; watchEyes();   // keyboard mode works right away; the camera upgrades it
   const video = $('camVideo');
@@ -46,7 +48,7 @@ async function setup() {
     return;
   }
   try {
-    eyes = await createEyes(video);
+    eyes = await createEyes(video); eyes.setQuality($('quality').value);
     check('tracker', 'ok', `478-point face mesh on ${eyes.state.delegate}`);
   } catch (e) {
     check('tracker', 'bad', 'model failed to load: keyboard mode');
@@ -75,7 +77,8 @@ const camName = (label) => label.replace(/\s*\([0-9a-f]{4}:[0-9a-f]{4}\)/i, '');
 async function useCamera(deviceId) {
   const video = $('camVideo');
   video.srcObject?.getTracks().forEach((t) => t.stop());
-  const want = { width: 640, height: 480, frameRate: 30 };
+  const hq = $('quality').value !== 'light';
+  const want = hq ? { width: 1280, height: 720, frameRate: 30 } : { width: 640, height: 480, frameRate: 15 };
   let stream;
   try { stream = await navigator.mediaDevices.getUserMedia({ video: deviceId ? { ...want, deviceId: { exact: deviceId } } : { ...want, facingMode: 'user' }, audio: false }); }
   catch (e) { if (!deviceId) throw e; stream = await navigator.mediaDevices.getUserMedia({ video: want, audio: false }); }   // saved camera is gone
@@ -127,21 +130,20 @@ async function shareScreen() {
 }
 
 // ---------- the run ----------
+const fx = createFx($('fx'));
+
 async function start() {
   initAudio();
-  const world = $('world'), bg = $('bg'), ghost = $('ghost'), live = $('liveBg'), desk = $('desk');
-  bg.className = ghost.className = ''; bg.style.backgroundImage = ghost.style.backgroundImage = ''; live.hidden = true; desk.hidden = true;
-
-  // keep the camera video rendering while the setup screen is hidden
+  const bg = $('bg'), live = $('liveBg'), desk = $('desk');
+  bg.className = ''; live.hidden = true; desk.hidden = true; fx.clear();
   $('facecam').prepend($('camVideo'));   // the face cam rides along in the corner
 
-  ghost.replaceChildren();
   if (desktop) {
     // the window is excluded from capture, so a live view of the whole screen does not show itself
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false });
-      live.srcObject = stream; live.hidden = false; live.classList.add('fill'); live.play();
-      const twin = document.createElement('video'); twin.muted = true; twin.srcObject = stream; twin.className = 'fill'; twin.play(); ghost.append(twin);
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30, width: { max: 1920 } }, audio: false });
+      live.srcObject = stream; live.hidden = false; await live.play();
+      fx.setSource(live);
     } catch { /* no capture: the overlay still draws notifications and chaos over the real screen */ }
     show('stage'); await desktop.overlay(true);
     return run();
@@ -153,16 +155,15 @@ async function start() {
     await new Promise((r) => setTimeout(r, 450));
     const v = share.video, c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
     c.getContext('2d').drawImage(v, 0, 0);
-    const url = await new Promise((r) => c.toBlob((b) => r(URL.createObjectURL(b)), 'image/jpeg', 0.92));
     share.stream.getTracks().forEach((t) => t.stop()); share = null;
-    bg.className = ghost.className = ''; bg.style.backgroundImage = ghost.style.backgroundImage = `url(${url})`; desk.hidden = true;
+    bg.className = ''; desk.hidden = true; fx.setSource(c);
   } else if (share) {
-    live.srcObject = share.stream; live.hidden = false; live.classList.remove('fill'); live.play().catch(() => {});
-    const twin = document.createElement('video'); twin.muted = true; twin.srcObject = share.stream; twin.className = 'contain'; twin.play().catch(() => {}); ghost.append(twin);   // double vision
-    try { await share.controller?.forwardWheel?.(live); } catch {}   // Chrome: scroll the shared tab from here
+    live.srcObject = share.stream; live.hidden = false; live.play().catch(() => {});
+    fx.setSource(live, { contain: true });
+    try { await share.controller?.forwardWheel?.($('fx')); } catch {}   // Chrome: scroll the shared tab from here
     show('stage');
   } else {
-    bg.className = ghost.className = 'wall'; desk.hidden = false; show('stage');
+    bg.className = 'wall'; desk.hidden = false; show('stage');
   }
   try { await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); navigator.keyboard?.lock?.(['Escape']).catch(() => {}); } catch {}
   run();
@@ -170,13 +171,14 @@ async function start() {
 
 function run() {
   running = true;
-  const drunk = createDrunk({ world: $('world'), ghost: $('ghost'), mlg: $('mlg'), toasts: $('toasts') });
+  const drunk = createDrunk({ world: $('world'), fx, mlg: $('mlg'), toasts: $('toasts') });
   const feed = createFeed($('toasts'), $('chatlog'));
   const pin = parseFloat(params.get('level')) || 0;   // rehearsal: ?level=0.8 starts there
   // seconds of open eyes from sober to fully gone: ?rise=20 in the URL, or the Speed menu
   const RISE_S = Math.max(3, parseFloat(params.get('rise')) || parseFloat($('speed').value) || 12);
   const pace = Math.min(2, Math.max(0.6, RISE_S / 14));   // notifications keep up with the speed
   let level = pin, peak = 0, awake = 0, total = 0, rests = 0, nextToast = 1.2, last = performance.now(), t = 0, closedFor = 0;
+  let lastHud = '', lastRing = '', perfN = 0, perfAt = performance.now();
   let wasClosed = false, restStart = 0, levelAtClose = 0, belled = false;
   const GREET = ['nice rest', 'good morning', 'welcome back', 'rise and shine', 'power nap complete', 'eyelids: rebooted', 'that was a blink, technically'];
   const greet = (secs, recovered) => {
@@ -199,7 +201,7 @@ function run() {
     $('morning').classList.remove('on');
     removeEventListener('pointerdown', onClick); removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs);
     restSound(false); drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
-    $('liveBg').srcObject?.getTracks().forEach((x) => x.stop()); share = null;
+    $('liveBg').srcObject?.getTracks().forEach((x) => x.stop()); $('liveBg').srcObject = null; fx.clear(); share = null;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     $('endTime').textContent = fmt(total); $('endBac').textContent = (peak * 0.4).toFixed(2); $('endRests').textContent = rests;
     show('end');
@@ -217,19 +219,19 @@ function run() {
       level = Math.max(0, level - dt / FALL_S);
       if (level === 0 && !belled) { belled = true; awake = 0; ding(); }   // the bell: fully sober, you can open them
     } else {
-      if (wasClosed) { wasClosed = false; rests++; greet(t - restStart, levelAtClose - level); }
+      if (wasClosed) { wasClosed = false; rests++; wake(); greet(t - restStart, levelAtClose - level); }
       level = Math.min(1, level + dt / RISE_S); awake += dt;
     }
     peak = Math.max(peak, level);
     $('rest').classList.toggle('on', closed);
     restSound(closed && level > 0);
     const ring = level < 0.3 ? 'var(--ok)' : level < 0.7 ? '#ffd166' : 'var(--bad)';
-    $('hud').style.setProperty('--ring', ring); $('facecam').style.setProperty('--ring', closed ? 'var(--accent)' : ring);
-    $('faceState').textContent = closed ? 'resting' : eyes.state.delegate === 'keyboard' ? 'Space = rest' : eyes.state.face ? 'open' : 'no face';
+    const face = closed ? 'resting' : eyes.state.delegate === 'keyboard' ? 'Space = rest' : eyes.state.face ? 'open' : 'no face';
+    if (ring + face !== lastRing) { lastRing = ring + face; $('hud').style.setProperty('--ring', ring); $('facecam').style.setProperty('--ring', closed ? 'var(--accent)' : ring); $('faceState').textContent = face; }
 
     drunk.render(t, level);
-    $('hudAwake').textContent = 'awake ' + fmt(awake);
-    $('hudBac').textContent = 'BAC ' + (level * 0.4).toFixed(2);
+    const hudText = 'awake ' + fmt(awake) + '|BAC ' + (level * 0.4).toFixed(2);
+    if (hudText !== lastHud) { lastHud = hudText; [$('hudAwake').textContent, $('hudBac').textContent] = hudText.split('|'); }
 
     if (!closed && t > nextToast) {
       let tier = level < 0.14 ? 0 : level < 0.42 ? 1 : level < 0.72 ? 2 : 3;
@@ -237,6 +239,8 @@ function run() {
       feed.push(tier);
       nextToast = t + (2.4 - level * 1.7 + Math.random() * 0.5) * pace;
     }
+    // one line every 5 s so slowdowns are visible (npm run desktop prints it in the terminal)
+    perfN++; if (now - perfAt > 5000) { console.log(`PERF ${Math.round(perfN * 1000 / (now - perfAt))} fps · eye ${eyes.state.ms.toFixed(0)} ms · level ${level.toFixed(2)} · ${Math.round(total)} s in`); perfN = 0; perfAt = now; }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -247,6 +251,8 @@ $('toSetup').onclick = setup;
 $('share').onclick = shareScreen;
 $('start').onclick = start;
 $('again').onclick = () => { $('setup').querySelector('.cam').prepend($('camVideo')); show('setup'); watchEyes(); };
+$('quality').value = localStorage.getItem('quality') || 'high';
+$('quality').onchange = async (e) => { localStorage.setItem('quality', e.target.value); eyes.setQuality?.(e.target.value); if ($('camVideo').srcObject) { try { await useCamera($('camPick').value || localStorage.getItem('camera') || undefined); } catch {} } };
 $('speed').value = localStorage.getItem('speed') || '12'; $('speed').onchange = (e) => localStorage.setItem('speed', e.target.value);
 
 const inField = (e) => /INPUT|TEXTAREA/.test(e.target.tagName);
@@ -276,7 +282,11 @@ if (desktop) {
   if (new URLSearchParams(location.search).has('smoke')) (async () => {   // npm run desktop self-check
     try {
       const st = await navigator.mediaDevices.getDisplayMedia({ video: true }); const v = document.createElement('video'); v.muted = true; v.srcObject = st; await v.play();
-      console.log(`SMOKE ok capture ${v.videoWidth}x${v.videoHeight} bridge ${typeof desktop.overlay}`);
+      // run the real GPU path on the live capture and time it
+      const live = $('liveBg'); live.srcObject = st; live.hidden = false; await live.play(); fx.setSource(live); show('stage');
+      const c = $('fx'), gl = c.getContext('webgl'), px = new Uint8Array(4); let n = 0, lit = 0; const t0 = performance.now();
+      while (performance.now() - t0 < 2500) { live.currentTime; fx.draw(n / 30, 0.8); gl.readPixels(c.width >> 1, c.height >> 1, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, px); lit += px[0] + px[1] + px[2] > 0 ? 1 : 0; n++; await new Promise((r) => setTimeout(r, 0)); }
+      console.log(`SMOKE ok capture ${v.videoWidth}x${v.videoHeight} bridge ${typeof desktop.overlay} shader ${c.width}x${c.height} ${((performance.now() - t0) / n).toFixed(1)} ms/frame lit ${lit}/${n}`);
     } catch (e) { console.log('SMOKE fail ' + e.message); }
   })();
 }

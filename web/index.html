@@ -9,13 +9,6 @@
 </head>
 <body>
 
-<svg width="0" height="0" style="position:absolute" aria-hidden="true">
-  <filter id="warp" x="-5%" y="-5%" width="110%" height="110%">
-    <feTurbulence id="warpNoise" type="fractalNoise" baseFrequency="0.004 0.009" numOctaves="2" seed="3" result="n"/>
-    <feDisplacementMap id="warpMap" in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/>
-  </filter>
-</svg>
-
 <!-- 1. intro -->
 <section id="intro" class="screen">
   <div class="logo" aria-hidden="true"><span class="eye"><i></i></span><span class="eye"><i></i></span></div>
@@ -33,6 +26,7 @@
       <li data-k="browser"><b>Browser</b><span>…</span></li>
       <li data-k="display"><b>Display</b><span>…</span></li>
       <li data-k="hardware"><b>Hardware</b><span>…</span></li>
+      <li data-k="sound"><b>Sound</b><span>…</span></li>
       <li data-k="camera"><b>Camera</b><span>waiting for permission…</span><select id="camPick" hidden aria-label="Choose camera"></select></li>
       <li data-k="tracker"><b>Eye tracker</b><span>loading model…</span></li>
       <li data-k="eyes"><b>Your eyes</b><span>blink twice to confirm</span></li>
@@ -44,6 +38,7 @@
       <div class="meter"><i id="eyeMeter"></i></div>
     </div>
   </div>
+  <label class="speed">Eye tracking <select id="quality"><option value="high" selected>High: every frame, 720p, mesh + eyelid geometry</option><option value="light">Light: 15 fps, 480p</option></select></label>
   <label class="speed">Speed <select id="speed"><option value="7">Demo: gone in 7 s</option><option value="12" selected>Fast: 12 s</option><option value="20">Normal: 20 s</option><option value="35">Slow: 35 s</option></select></label>
   <button id="start" class="primary" disabled>Start working</button>
   <p class="fine">No camera? Hold <kbd>Space</kbd> to close your eyes. <kbd>Esc</kbd> ends it.</p>
@@ -54,7 +49,7 @@
   <div id="world">
     <div id="bg"></div>
     <video id="liveBg" playsinline muted hidden></video>
-    <div id="ghost"></div>
+    <canvas id="fx" hidden></canvas>
     <div id="desk" hidden>
       <div class="win" id="winNotes" style="left:7%;top:9%;width:46%;height:62%">
         <header><span class="dots"><i></i><i></i><i></i></span>Q4 Synergy Report (FINAL v7 real).docx</header>

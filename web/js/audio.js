@@ -1,47 +1,38 @@
-// All sound is synthesized: no audio files.
-let ctx, master, pad;
+// No synthesized sound. Two official sources:
+//  - Android system sounds from Google's AOSP (Apache 2.0), shipped in vendor/sounds. Used everywhere.
+//  - The operating system's own notification and ring sounds, when the page is served by the local
+//    app (npm run web / npm run desktop). They are read from the computer, never shipped.
+const DIR = new URL('../vendor/sounds/', import.meta.url).href;
+const FILES = {
+  message: 'Proxima', email: 'Polaris', calendar: 'Spica', system: 'Tejat', critical: 'LowBattery', call: 'Andromeda',
+  bell: 'ChargingStarted', wake: 'Unlock', sleep: 'Lock', tick: 'camera_click', horn: 'Argon'
+};
+const SYSTEM_KINDS = ['message', 'email', 'calendar', 'call', 'system', 'critical'];
+const bank = {};
+let ready = false, system = false;
 
 export function initAudio() {
-  if (ctx) return;
-  try { ctx = new AudioContext(); master = ctx.createGain(); master.gain.value = 0.5; master.connect(ctx.destination); } catch { ctx = null; }
+  if (ready) return; ready = true;
+  for (const [k, f] of Object.entries(FILES)) { if (!bank[k]) { bank[k] = new Audio(DIR + f + '.ogg'); bank[k].preload = 'auto'; } }
 }
 
-function tone(freq, dur, type = 'sine', vol = 0.2, when = 0, slideTo = null) {
-  if (!ctx) return;
-  const t = ctx.currentTime + when, o = ctx.createOscillator(), g = ctx.createGain();
-  o.type = type; o.frequency.setValueAtTime(freq, t);
-  if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
-  g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.015); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.05);
+export async function probeSystemSounds() {
+  try { const r = await fetch('system-sound/system', { method: 'HEAD' }); system = r.ok && /audio/.test(r.headers.get('content-type') || ''); } catch { system = false; }
+  if (system) for (const k of SYSTEM_KINDS) { bank[k] = new Audio('system-sound/' + k); bank[k].preload = 'auto'; }
+  return system;
 }
 
-export const notify = () => { tone(740, 0.09, 'sine', 0.12); tone(988, 0.14, 'sine', 0.12, 0.09); };
-export const ding = () => { tone(1318, 1.2, 'sine', 0.25); tone(1976, 0.9, 'sine', 0.1, 0.02); };
-
-export function hitmarker() {
-  if (!ctx) return;
-  const t = ctx.currentTime, len = ctx.sampleRate * 0.05, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
-  const src = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), g = ctx.createGain();
-  hp.type = 'highpass'; hp.frequency.value = 2500; g.gain.value = 0.5;
-  src.buffer = buf; src.connect(hp).connect(g).connect(master); src.start(t);
+// play a sound; overlapping plays get their own copy. maxMs cuts long ones (ringtones, alarms) short.
+function play(kind, volume = 0.6, maxMs = 0) {
+  const src = bank[kind]; if (!src) return;
+  const a = src.paused ? src : src.cloneNode();
+  a.volume = volume; a.currentTime = 0; a.play().catch(() => {});
+  if (maxMs) setTimeout(() => { a.pause(); }, maxMs);
 }
 
-export function airhorn() {
-  for (const f of [466, 587, 698]) { tone(f, 0.55, 'sawtooth', 0.09, 0, f * 0.97); tone(f, 0.28, 'sawtooth', 0.09, 0.62, f * 0.97); }
-}
-
-// a soft pad that plays while the eyes are closed, so you can hear that resting works
-export function rest(on) {
-  if (!ctx) return;
-  if (on && !pad) {
-    const g = ctx.createGain(); g.gain.value = 0.0001; g.connect(master);
-    const os = [196, 247, 294].map((f) => { const o = ctx.createOscillator(); o.type = 'sine'; o.frequency.value = f; o.connect(g); o.start(); return o; });
-    g.gain.exponentialRampToValueAtTime(0.07, ctx.currentTime + 0.5);
-    pad = { g, os };
-  } else if (!on && pad) {
-    const p = pad; pad = null;
-    p.g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
-    setTimeout(() => p.os.forEach((o) => o.stop()), 500);
-  }
-}
+export const notify = (kind = 'system') => play(bank[kind] ? kind : 'system', 0.55, kind === 'call' ? 2600 : 0);
+export const ding = () => play('bell', 0.7);          // fully sober: you can open your eyes
+export const hitmarker = () => play('tick', 0.5);
+export const airhorn = () => play('horn', 0.45, 1100);
+export function rest(on) { if (on !== rest.on) { rest.on = on; if (on) play('sleep', 0.5); } }
+export const wake = () => play('wake', 0.5);
