@@ -10,7 +10,7 @@ const SOUNDS = process.platform === 'win32'
   : { message: 'Tink.aiff', email: 'Glass.aiff', calendar: 'Ping.aiff', call: 'Submarine.aiff', system: 'Pop.aiff', critical: 'Sosumi.aiff' };
 
 function serve(port = 8770) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const server = http.createServer((req, res) => {
       const sound = /^\/system-sound\/(\w+)$/.exec(req.url.split('?')[0]);
       if (sound) {
@@ -57,6 +57,7 @@ function serve(port = 8770) {
         stream.pipe(res);
       });
     });
+    server.once('error', reject);   // port taken: the caller tries another
     server.listen(port, '127.0.0.1', () => resolve({ server, url: `http://127.0.0.1:${server.address().port}/` }));
   });
 }
