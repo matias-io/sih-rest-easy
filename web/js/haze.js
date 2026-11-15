@@ -76,8 +76,7 @@ export function createHaze(host) {
       // Tunnel vision: the clear spot shrinks with BAC, breathes with the music and wanders.
       if (t >= nextFocus) { nextFocus = t + rnd(1.2, 3.5); focusTx = rnd(-1, 1) * 16 * heavy; focusTy = rnd(-1, 1) * 12 * heavy; }
       focusX += (focusTx - focusX) * (1 - Math.exp(-dt * 0.9)); focusY += (focusTy - focusY) * (1 - Math.exp(-dt * 0.9));
-      const hole = 2.3 - 1.6 * heavy + (calm ? 0 : 0.12 * pulse * amount - 0.1 * kick * heavy);
-      set(tunnel, 'transform', `translate(${focusX.toFixed(1)}vw,${focusY.toFixed(1)}vh) scale(${hole.toFixed(3)})`);
+
       set(tunnel, 'opacity', (Math.min(1, amount * 1.4) * 0.02).toFixed(3));   // barely-there darkness
 
       // Heavy eyelids: a resting droop plus slow, random, deepening blinks.
