@@ -100,7 +100,12 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 /* the two things that are Rest Easy and not your screen wear the same ring */
 #hud, #facecam { --ring:var(--ok); box-shadow:0 0 0 2px var(--ring), 0 0 18px 2px color-mix(in srgb, var(--ring) 55%, transparent), 0 6px 20px #000a; z-index:5; }
 #hud { position:absolute; top:10px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:12px; background:#0b0d12f2; color:#fff; padding:5px 6px 5px 14px; border-radius:999px; font:600 12px/1 ui-monospace, Consolas, monospace; white-space:nowrap; }
-#hud .brand { font-family:"Segoe UI", system-ui, sans-serif; font-weight:700; letter-spacing:.02em; }
+#hud .brand { font-family:"Segoe UI", system-ui, sans-serif; font-weight:700; letter-spacing:.02em; background:none; border:0; color:inherit; padding:0; font-size:inherit; }
+#hud .brand:hover, #hud .brand[aria-expanded="true"] { text-decoration:underline; text-underline-offset:3px; }
+#tune { position:absolute; top:52px; left:50%; transform:translateX(-50%); z-index:5; display:grid; gap:12px; width:260px; padding:14px 16px; border-radius:12px; background:#0b0d12f2; color:#fff; box-shadow:0 0 0 1px #ffffff26, 0 6px 20px #000a; font:600 12px/1.2 "Segoe UI", system-ui, sans-serif; }
+#tune label { display:grid; gap:4px; }
+#tune label span { color:var(--dim); font-weight:400; }
+#tune input { width:100%; accent-color:var(--accent); }
 #hudBac { color:var(--ring); }
 #endBtn { background:#ffffff1a; color:#fff; border:0; border-radius:999px; padding:5px 12px; font:700 11px/1 "Segoe UI", system-ui, sans-serif; }
 #endBtn:hover { background:var(--bad); }

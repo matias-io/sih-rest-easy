@@ -4,6 +4,7 @@ import { createFx } from './fx.js';
 import { createFeed } from './feed.js';
 import { loadMusic, startMusic, music, stopMusic, musicState, CREDIT } from './music.js';
 import { createAds } from './ads.js';
+import { tune, setTune } from './tune.js';
 import { createChaos } from './chaos.js';
 import { createMascotEyes } from './mascot.js';
 import { initAudio, ding, rest as restSound, wake, probeSystemSounds, stopSounds } from './audio.js';
@@ -228,7 +229,14 @@ function run() {
   };
   $('endBtn').onclick = () => stop();
   // desktop: the overlay ignores the mouse, except over our own controls
-  if (desktop) { const r = $('hud').getBoundingClientRect(); desktop.hitBox({ x: r.left - 6, y: r.top - 6, w: r.width + 12, h: r.height + 12 }); }
+  // desktop: the hit box covers the HUD, and the transparency panel while it is open
+  const syncHit = () => { if (!desktop) return; const a = $('hud').getBoundingClientRect(), p = $('tune'); const b = p.hidden ? a : p.getBoundingClientRect();
+    const x = Math.min(a.left, b.left) - 6, y = Math.min(a.top, b.top) - 6; desktop.hitBox({ x, y, w: Math.max(a.right, b.right) + 6 - x, h: Math.max(a.bottom, b.bottom) + 6 - y }); };
+  $('tuneFg').value = Math.round(tune.fg * 100); $('tuneBg').value = Math.round(tune.bg * 100);
+  $('tuneFg').oninput = (e) => setTune('fg', e.target.value / 100);
+  $('tuneBg').oninput = (e) => setTune('bg', e.target.value / 100);
+  $('brandBtn').onclick = () => { const p = $('tune'); p.hidden = !p.hidden; $('brandBtn').setAttribute('aria-expanded', String(!p.hidden)); syncHit(); };
+  syncHit();
 
   const onClick = (e) => { if (level > 0.72) drunk.hit(e.clientX, e.clientY); };
   const onKey = (e) => { if (e.key === ']') level = Math.min(1, level + 0.15); if (e.key === 'Escape' && !document.fullscreenElement) stop(); };
@@ -238,7 +246,7 @@ function run() {
   function stop() {
     if (!running) return; running = false; stopRun = null; if (desktop) desktop.overlay(false);
     eyes.pause?.();
-    $('morning').classList.remove('on');
+    $('morning').classList.remove('on'); $('tune').hidden = true; $('brandBtn').setAttribute('aria-expanded', 'false');
     removeEventListener('pointerdown', onClick); removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs);
     restSound(false); stopMusic(); stopSounds(); chaos.clear(); ads.clear(); $('credit').textContent = CREDIT; drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
     $('liveBg').srcObject?.getTracks().forEach((x) => x.stop()); $('liveBg').srcObject = null; fx.clear(); share = null;

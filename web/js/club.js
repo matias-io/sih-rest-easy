@@ -1,4 +1,5 @@
 // Fixed-size light rig: only transforms and opacity change during playback.
+import { tune } from './tune.js';
 export function createClub(host) {
   const rig = document.createElement('div'); rig.className = 'club'; rig.setAttribute('aria-hidden', 'true');
   const wash = document.createElement('div'); wash.className = 'club-wash'; rig.append(wash);
@@ -20,7 +21,7 @@ export function createClub(host) {
       const energy = Math.max(0, Math.min(1, music.energy || 0));
       // Smooth envelopes give the room a pulse without full-screen flashes.
       pulse += (Math.max(energy * 0.5, Math.min(1, music.kick || 0)) - pulse) * (1 - Math.exp(-dt * 5));
-      rig.style.opacity = (amount * (reduced.matches ? 0.28 : 0.55 + pulse * 0.25)).toFixed(3);
+      rig.style.opacity = (tune.bg * amount * (reduced.matches ? 0.28 : 0.55 + pulse * 0.25)).toFixed(3);
       for (let i = 0; i < beams.length; i++) {
         const angle = reduced.matches ? (i - 2.5) * 12 : Math.sin(t * (0.32 + i * 0.035) + i * 1.7) * (22 + amount * 24);
         beams[i].style.transform = `rotate(${angle.toFixed(2)}deg) scaleX(${(0.75 + pulse * 0.35).toFixed(3)})`;
