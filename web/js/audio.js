@@ -4,9 +4,10 @@ const FILES = {
   slack: 'slack-message.mp3', teams: 'teams-message.mp3', teamsCall: 'teams-call.mp3',
   discord: 'discord-message.mp3', discordCall: 'discord-call.mp3',
   discordJoin: 'discord-join.mp3', discordLeave: 'discord-leave.mp3',
+  pagerduty: 'pagerduty-notification.mp3',
   message: 'windows-system.wav', email: 'windows-email.wav', calendar: 'windows-calendar.wav',
   system: 'windows-system.wav', critical: 'windows-critical.wav',
-  bell: 'ChargingStarted.ogg', wake: 'Unlock.ogg', sleep: 'Lock.ogg', tick: 'camera_click.ogg', horn: 'airhorn.ogg'
+  bell: 'ChargingStarted.ogg', wake: 'Unlock.ogg', sleep: 'Lock.ogg', tick: 'camera_click.ogg'
 };
 const SYSTEM_KINDS = ['message', 'email', 'calendar', 'system', 'critical'];
 const bank = {};
@@ -48,6 +49,5 @@ export const notify = (kind = 'system') => play(FILES[kind] ? kind : 'system', 0
 export function stopSounds() { for (const entry of active.values()) entry.stop(); }
 export const ding = () => play('bell', 0.7);
 export const hitmarker = () => play('tick', 0.5);
-export const airhorn = () => play('horn', 0.5, 1500);
 export function rest(on) { if (on !== rest.on) { rest.on = on; if (on) { stopSounds(); play('sleep', 0.5); } } }
 export const wake = () => play('wake', 0.5);

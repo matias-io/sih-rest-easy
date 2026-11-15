@@ -53,5 +53,12 @@
     "file": "windows-critical.wav",
     "source": "C:\\Windows\\Media\\Windows Exclamation.wav",
     "sha256": "c362d950204cc8327016209a3246216efed7167cd92e02f754b963f49f793707"
+  },
+  {
+    "file": "pagerduty-notification.mp3",
+    "source": "https://raw.githubusercontent.com/PagerDuty/chrome-notifier/36abffc06fccff4f4c0798c5e5005b2e9fa0deb8/pd-notifier/audio/notification.mp3",
+    "sha256": "984b7403cfe2eaeec774d5d08a2629f84d305c7b0432ea356b7d448d30c931d8",
+    "license": "Apache-2.0; see pagerduty-LICENSE.txt",
+    "note": "Notification sound shipped in PagerDuty/chrome-notifier; not a claim about the current mobile app."
   }
 ]

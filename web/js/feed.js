@@ -111,7 +111,7 @@ export function createFeed(box, chatlog) {
       if (kind === 'teams' && !buttons) { const r = document.createElement('div'); r.className = 'reply'; r.innerHTML = '<span>↩&nbsp; Reply</span>'; el.append(r); }
       if (buttons) { const row = document.createElement('div'); row.className = 'acts'; for (const b of buttons) { const btn = document.createElement('button'); btn.textContent = b; btn.className = /Accept|Join/.test(b) ? 'go' : /Decline/.test(b) ? 'no' : ''; row.append(btn); } el.append(row); }
     }
-    const stopSound = notify(sound || (call ? app === 'discord' ? 'discordCall' : 'teamsCall' : { slack: 'slack', teams: 'teams', discord: 'discord', outlook: 'email', cal: 'calendar', pager: 'critical', win: 'critical' }[app] || 'system'));
+    const stopSound = notify(sound || (call ? app === 'discord' ? 'discordCall' : 'teamsCall' : { slack: 'slack', teams: 'teams', discord: 'discord', outlook: 'email', cal: 'calendar', pager: 'pagerduty', win: 'critical' }[app] || 'system'));
     const close = () => { stopSound(); el.classList.add('out'); setTimeout(() => el.remove(), 300); };
     el.dismiss = close;
     el.onclick = close; setTimeout(close, 7000);

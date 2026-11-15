@@ -41,13 +41,13 @@ Speed is set on the setup screen (7 to 35 seconds from sober to gone) or with `?
 
 Brand icons in `web/vendor/icons` are from simple-icons (CC0); the brands belong to their owners and are used here as parody.
 
-Notification sounds use the actual Teams ringtone and message recording from Microsoft's installed Teams package, Slack's Knock Brush from Slack's CDN, and Discord's message, ringtone, join and leave recordings from Discord's CDN. Windows mail, calendar and system recordings cover generic desktop alerts. Exact sources and SHA-256 hashes are in `web/vendor/sounds/sources.json`. These app and Windows recordings remain the property of their owners; they are not covered by the Android or icon licenses.
+Notification sounds use the actual Teams ringtone and message recording from Microsoft's installed Teams package, Slack's Knock Brush from Slack's CDN, and Discord's message, ringtone, join and leave recordings from Discord's CDN. PagerDuty alerts use the sound from PagerDuty's Chrome notification extension (Apache 2.0, license bundled). Windows mail, calendar and system recordings cover generic desktop alerts. Exact sources and SHA-256 hashes are in `web/vendor/sounds/sources.json`; the full event mapping is in `web/vendor/sounds/README.md`. The Teams, Slack, Discord and Windows recordings remain the property of their owners; they are not covered by the Android, PagerDuty or icon licenses.
 
 The remaining Android UI sounds in `web/vendor/sounds` are from the Android Open Source Project, Apache License 2.0. Notification banners are parody recreations with brand marks. Dating ads and relationship jokes have been removed.
 
 Third-party material:
 - Music: DEAF KEV - Invincible [NCS Release], provided by NoCopyrightSounds (`web/vendor/music`). The screen follows it through an audio analyser: calm in the quiet intro, chaos at the drop.
 - Photo: Sam Altman at TechCrunch Disrupt SF 2019, by TechCrunch, CC BY 2.0, via Wikimedia Commons (`web/vendor/img/sam.jpg`). Parody use.
-- Air horn: "Sound of American Train Horn Nathan Airchime K5LA" by WeenyBeany, CC BY 4.0, via Wikimedia Commons.
+- Unused legacy asset: "Sound of American Train Horn Nathan Airchime K5LA" by WeenyBeany, CC BY 4.0, via Wikimedia Commons. Horn playback is disabled.
 
 Timed test run: add `?autorun=60&cycle=20` on the web, or `REST_EASY_QUERY="autorun=60&cycle=20" npm run desktop`. It goes through setup, runs for 60 s closing the eyes every 20 s, and prints a `PERF` line every 5 s (fps, worst frame, tracking time, memory).
