@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rest Easy</title>
+<meta name="description" content="Your screen gets drunk the longer you keep your eyes open. Close them to sober it up.">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <filter id="warp" x="-5%" y="-5%" width="110%" height="110%">
+    <feTurbulence id="warpNoise" type="fractalNoise" baseFrequency="0.004 0.009" numOctaves="2" seed="3" result="n"/>
+    <feDisplacementMap id="warpMap" in="SourceGraphic" in2="n" scale="0" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<!-- 1. intro -->
+<section id="intro" class="screen">
+  <div class="logo" aria-hidden="true"><span class="eye"><i></i></span><span class="eye"><i></i></span></div>
+  <h1>Rest Easy</h1>
+  <p class="tag">Your screen gets drunk the longer you keep your eyes open.<br>The only fix is to close them.</p>
+  <button id="toSetup" class="primary">Check my setup</button>
+  <p class="fine">Camera stays on your device. Nothing is uploaded.</p>
+</section>
+
+<!-- 2. setup -->
+<section id="setup" class="screen" hidden>
+  <h2>Pre-flight check</h2>
+  <div class="setup-grid">
+    <ul id="checks" class="checks">
+      <li data-k="browser"><b>Browser</b><span>…</span></li>
+      <li data-k="display"><b>Display</b><span>…</span></li>
+      <li data-k="camera"><b>Camera</b><span>waiting for permission…</span></li>
+      <li data-k="tracker"><b>Eye tracker</b><span>loading model…</span></li>
+      <li data-k="eyes"><b>Your eyes</b><span>blink twice to confirm</span></li>
+      <li data-k="screen"><b>Your screen</b><span>optional <button id="share" class="mini">Share my screen</button></span></li>
+    </ul>
+    <div class="cam">
+      <video id="camVideo" playsinline muted></video>
+      <div id="eyeState" class="eye-state">…</div>
+      <div class="meter"><i id="eyeMeter"></i></div>
+    </div>
+  </div>
+  <button id="start" class="primary" disabled>Start working</button>
+  <p class="fine">No camera? Hold <kbd>Space</kbd> to close your eyes. <kbd>Esc</kbd> ends it.</p>
+</section>
+
+<!-- 3. the stage -->
+<section id="stage" hidden>
+  <div id="world">
+    <div id="bg"></div>
+    <video id="liveBg" playsinline muted hidden></video>
+    <div id="ghost"></div>
+    <div id="desk" hidden>
+      <div class="win" id="winNotes" style="left:7%;top:9%;width:46%;height:62%">
+        <header><span class="dots"><i></i><i></i><i></i></span>Q4 Synergy Report (FINAL v7 real).docx</header>
+        <textarea spellcheck="false">Q4 Synergy Report
+
+1. Executive summary
+We are aligned. We have never been more aligned.
+
+2. Action items
+- Circle back
+- Touch base
+- Blink (overdue)
+
+Type here. Try to get some work done.</textarea>
+      </div>
+      <div class="win chat" id="winChat" style="left:57%;top:16%;width:36%;height:58%">
+        <header><span class="dots"><i></i><i></i><i></i></span># general</header>
+        <div class="chatlog" id="chatlog"></div>
+        <form id="chatform"><input placeholder="Message #general" autocomplete="off"></form>
+      </div>
+      <div class="taskbar"><span class="startbtn"></span><span class="tb-app on"></span><span class="tb-app on"></span><span class="tb-app"></span><span class="tb-app"></span><span id="clock" class="clock"></span></div>
+    </div>
+  </div>
+  <div id="toasts"></div>
+  <div id="mlg"></div>
+  <div id="hud"><span id="hudAwake">awake 0:00</span><span id="hudBac">screen BAC 0.00</span></div>
+  <div id="rest"><div><div class="zz">z z z</div><b>Resting…</b><span>keep them closed until you hear the bell</span></div></div>
+  <div id="morning">good morning ☀</div>
+</section>
+
+<!-- 4. end -->
+<section id="end" class="screen" hidden>
+  <h2>You survived <span id="endTime">0:00</span> awake.</h2>
+  <p class="tag">Peak screen BAC <span id="endBac">0.00</span>. Rests taken: <span id="endRests">0</span>.</p>
+  <button id="again" class="primary">Go again</button>
+</section>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
