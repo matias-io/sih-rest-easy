@@ -90,12 +90,17 @@ async function useCamera(deviceId) {
   const want = hq
     ? { width: { ideal: 640, max: 640 }, height: { ideal: 480, max: 480 }, frameRate: { ideal: 24, max: 24 } }
     : { width: { ideal: 320, max: 320 }, height: { ideal: 240, max: 240 }, frameRate: { ideal: 15, max: 15 } };
-  let stream;
+  let stream, busy = false;
   try { stream = await navigator.mediaDevices.getUserMedia({ video: deviceId ? { ...want, deviceId: { exact: deviceId } } : { ...want, facingMode: 'user' }, audio: false }); }
-  catch (e) { if (!deviceId) throw e; stream = await navigator.mediaDevices.getUserMedia({ video: want, audio: false }); }   // saved camera is gone
+  catch (e) {   // saved camera is gone, or another app (often another tab running this page) has it open
+    if (!deviceId) throw e;
+    busy = e.name === 'NotReadableError';
+    stream = await navigator.mediaDevices.getUserMedia({ video: want, audio: false });
+  }
   video.srcObject = stream; await video.play();
   const tr = stream.getVideoTracks()[0], st = tr.getSettings();
-  check('camera', 'ok', `${camName(tr.label)}, ${st.width}×${st.height} at ${Math.round(st.frameRate || 30)} fps`);
+  const wanted = busy && st.deviceId !== deviceId ? (await navigator.mediaDevices.enumerateDevices()).find((d) => d.deviceId === deviceId) : null;
+  check('camera', 'ok', `${camName(tr.label)}, ${st.width}×${st.height} at ${Math.round(st.frameRate || 30)} fps` + (wanted ? ` (${camName(wanted.label) || 'your camera'} is in use by another app or tab)` : ''));
   return st.deviceId;
 }
 async function listCameras() {
