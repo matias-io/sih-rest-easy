@@ -4,7 +4,7 @@ Your screen gets drunk the longer you keep your eyes open. The only fix is to cl
 
 Built at the Stupid Ideas Hackathon, Ottawa, 15 Nov 2026, by Matias Suxo.
 
-**Live:** https://matias-io.github.io/sih-rest-easy/
+**Live:** https://sih.matiass.ca
 
 ## How it works
 
@@ -15,14 +15,26 @@ Built at the Stupid Ideas Hackathon, Ottawa, 15 Nov 2026, by Matias Suxo.
 
 Eye tracking is MediaPipe Face Landmarker (478-point face mesh, blink blendshapes) running on your GPU in the browser. The camera never leaves your device. All sound is synthesized. No build step, no server.
 
-## What a web page cannot do
+## Two versions, one app
 
-A browser will not let a page draw over your real desktop or pass clicks through to other apps. So the "real desktop" mode is a captured picture of your screen (or a live view of one window or tab), not a true overlay. The built-in desktop is the fully interactive mode.
+Everything lives in `web/`. The desktop version is a thin Electron shell (`desktop/`) that loads the same page.
 
-## Run locally
+| | Web (Chrome) | Desktop (Electron) |
+|---|---|---|
+| Run | `npm run web` | `npm run desktop` |
+| Backdrop | a picture of your screen, a live window or tab, or the built-in desktop | your real desktop, live |
+| Your real apps stay usable | no | yes: clicks and typing pass through |
+| Stop | Esc | Ctrl+Shift+X (Cmd+Shift+X on Mac) |
+
+A browser will not let a page draw over your desktop or pass clicks through, which is why the desktop version exists. Its window is excluded from screen capture, so it can show the live screen back, distorted, without showing itself.
+
+## Run
 
 ```
-python -m http.server 8770
+npm install
+npm run web       # http://127.0.0.1:8770
+npm run desktop   # the overlay on your real desktop
+npm run deploy    # Cloudflare (sih.matiass.ca)
 ```
 
-Open http://localhost:8770 in Chrome. Rehearsal switches: `?level=0.8` starts drunk, `?cam=0` skips the camera (hold Space to close your eyes), `]` adds drunkenness, Esc ends.
+Rehearsal switches (web): `?level=0.8` starts drunk, `?cam=0` skips the camera (hold Space to close your eyes), `]` adds drunkenness.

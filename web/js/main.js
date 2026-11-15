@@ -9,7 +9,12 @@ const FALL_S = 2.6;   // seconds of closed eyes to fully sober
 const show = (id) => { for (const s of ['intro', 'setup', 'stage', 'end']) $(s).hidden = s !== id; };
 const fmt = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 
-let eyes = keyboardEyes(), share = null, running = false;
+let eyes = keyboardEyes(), share = null, running = false, stopRun = null;
+
+// The desktop app (Electron) loads this same page with ?desktop=1 and a small bridge.
+// There the stage is a click-through window over the real desktop, showing it live.
+const desktop = new URLSearchParams(location.search).has('desktop') ? window.restEasyDesktop : null;
+if (desktop) { document.body.classList.add('desktop'); desktop.onStop(() => (stopRun ? stopRun() : desktop.quit())); }
 
 // ---------- setup ----------
 function check(key, cls, text) {
@@ -23,7 +28,8 @@ async function setup() {
   const brand = navigator.userAgentData?.brands?.find((b) => !/Not/.test(b.brand))?.brand || (/(Firefox|Safari|Chrome)/.exec(navigator.userAgent) || ['browser'])[0];
   check('browser', document.fullscreenEnabled ? 'ok' : 'bad', `${brand} on ${navigator.userAgentData?.platform || navigator.platform}`);
   check('display', 'ok', `${screen.width}×${screen.height} at ${devicePixelRatio}x`);
-  if (!navigator.mediaDevices?.getDisplayMedia) check('screen', '', 'not supported here, using the built-in desktop');
+  if (desktop) check('screen', 'ok', 'live overlay on your real desktop (Ctrl+Shift+X stops it)');
+  else if (!navigator.mediaDevices?.getDisplayMedia) check('screen', '', 'not supported here, using the built-in desktop');
 
   check('camera', 'wait'); check('tracker', 'wait');
   $('start').disabled = false; watchEyes();   // keyboard mode works right away; the camera upgrades it
@@ -90,6 +96,17 @@ async function start() {
   // keep the camera video rendering while the setup screen is hidden
   const cam = $('camVideo'); Object.assign(cam.style, { position: 'fixed', width: '2px', height: '2px', opacity: '0.01', left: '0', top: '0' }); $('stage').appendChild(cam);
 
+  ghost.replaceChildren();
+  if (desktop) {
+    // the window is excluded from capture, so a live view of the whole screen does not show itself
+    try {
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false });
+      live.srcObject = stream; live.hidden = false; live.classList.add('fill'); live.play();
+      const twin = document.createElement('video'); twin.muted = true; twin.srcObject = stream; twin.className = 'fill'; twin.play(); ghost.append(twin);
+    } catch { /* no capture: the overlay still draws notifications and chaos over the real screen */ }
+    show('stage'); await desktop.overlay(true);
+    return run();
+  }
   if (share?.surface === 'monitor') {
     // show the built-in desktop in the page for a moment so the frame we take has "work" in it,
     // under your real tab strip and above your real taskbar
@@ -124,7 +141,7 @@ function run() {
   addEventListener('pointerdown', onClick); addEventListener('keydown', onKey); document.addEventListener('fullscreenchange', onFs);
 
   function stop() {
-    if (!running) return; running = false;
+    if (!running) return; running = false; stopRun = null; if (desktop) desktop.overlay(false);
     removeEventListener('pointerdown', onClick); removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs);
     restSound(false); drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
     $('liveBg').srcObject?.getTracks().forEach((x) => x.stop()); share = null;
@@ -133,6 +150,7 @@ function run() {
     show('end');
   }
 
+  stopRun = stop;
   function frame(now) {
     if (!running) return;
     const dt = Math.min(0.1, (now - last) / 1000); last = now; t += dt; total += dt;
@@ -191,3 +209,15 @@ $('chatform').onsubmit = (e) => {
   const add = (who, msg) => { const p = document.createElement('p'), b = document.createElement('b'); b.textContent = who; p.append(b, msg); $('chatlog').append(p); $('chatlog').scrollTop = 1e6; };
   add('you', inp.value); inp.value = ''; setTimeout(() => add('Dave (Manager)', 'per my last message'), 900);
 };
+
+// desktop app extras
+if (desktop) {
+  const q = document.createElement('button'); q.className = 'mini'; q.textContent = 'Quit'; q.onclick = () => desktop.quit(); $('end').append(q);
+  const q2 = q.cloneNode(true); q2.onclick = q.onclick; $('intro').append(q2);
+  if (new URLSearchParams(location.search).has('smoke')) (async () => {   // npm run desktop self-check
+    try {
+      const st = await navigator.mediaDevices.getDisplayMedia({ video: true }); const v = document.createElement('video'); v.muted = true; v.srcObject = st; await v.play();
+      console.log(`SMOKE ok capture ${v.videoWidth}x${v.videoHeight} bridge ${typeof desktop.overlay}`);
+    } catch (e) { console.log('SMOKE fail ' + e.message); }
+  })();
+}

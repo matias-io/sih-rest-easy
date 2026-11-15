@@ -1,0 +1,6 @@
+{
+  "name": "sih-rest-easy",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./web" },
+  "routes": [{ "pattern": "sih.matiass.ca", "custom_domain": true }]
+}
