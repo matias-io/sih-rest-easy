@@ -146,7 +146,7 @@ export function createFeed(box, chatlog) {
       dismiss.setAttribute('aria-label', 'Dismiss photo of ' + photo.title);
       el.querySelector('.x').replaceWith(dismiss);
     }
-    const stopSound = notify(sound || (call ? app === 'discord' ? 'discordCall' : 'teamsCall' : { slack: 'slack', teams: 'teams', discord: 'discord', outlook: 'email', cal: 'calendar', pager: 'critical', win: 'critical' }[app] || 'system'));
+    const stopSound = notify(sound || (call ? app === 'discord' ? 'discordCall' : 'teamsCall' : { slack: 'slack', teams: 'teams', discord: 'discord', outlook: 'email', cal: 'calendar', pager: 'pagerduty', win: 'critical' }[app] || 'system'));
     let closed = false, exitTimer;
     const dispose = () => { clearTimeout(expiryTimer); clearTimeout(exitTimer); stopSound(); active.delete(el); el.remove(); };
     const close = () => { if (closed) return; closed = true; clearTimeout(expiryTimer); stopSound(); el.classList.add('out'); exitTimer = setTimeout(dispose, 300); };

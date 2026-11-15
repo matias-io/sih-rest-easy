@@ -1,5 +1,5 @@
 // Turns one number (level, 0 sober to 1 gone) into what the screen looks like.
-import { hitmarker, airhorn } from './audio.js';
+import { hitmarker } from './audio.js';
 
 const POPS = ['WOW', '360', 'MLG', 'SAMPLE TEXT', '+100', 'OHHHH', 'NO SLEEP', 'GET REKT', 'BLINK = NOOB', '404 SLEEP'];
 
@@ -25,7 +25,7 @@ export function createDrunk({ world, fx, mlg, toasts }) {
     else if (r < 0.6) { hit(rnd(0.1, 0.9) * innerWidth, rnd(0.1, 0.9) * innerHeight); }
     else if (r < 0.75) { spawn('tri', { left: rnd(10, 80) + '%', top: rnd(15, 60) + '%' }, 2400); }
     else if (r < 0.9) { for (let i = 0; i < 14; i++) spawn('chip', { left: rnd(0, 100) + '%', animationDuration: rnd(1.6, 3.2) + 's' }, 3300); }
-    else { spawn('shades', {}, 3000); airhorn(); shake = 1; }
+    else { spawn('shades', {}, 3000); shake = 1; }
   }
 
   const SAM = ['hey. need $7 trillion by EOD', 'your free trial of blinking has expired', 'close your eyes. I am scaling.', 'are you AGI yet', 'this meeting could have been a GPU'];
@@ -34,7 +34,7 @@ export function createDrunk({ world, fx, mlg, toasts }) {
     el.style.setProperty('--r', rnd(-14, 14) + 'deg');
     const img = new Image(); img.src = new URL('../vendor/img/sam.jpg', import.meta.url).href; img.alt = '';
     const cap = document.createElement('b'); cap.textContent = SAM[Math.floor(Math.random() * SAM.length)];
-    el.append(img, cap); airhorn(); shake = 1;
+    el.append(img, cap); shake = 1;
   }
 
   // t in seconds, level 0..1, m = the music (energy, kick, mode, seed)
