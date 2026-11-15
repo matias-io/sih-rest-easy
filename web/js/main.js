@@ -28,18 +28,18 @@ async function setup() {
   const brand = navigator.userAgentData?.brands?.find((b) => !/Not/.test(b.brand))?.brand || (/(Firefox|Safari|Chrome)/.exec(navigator.userAgent) || ['browser'])[0];
   check('browser', document.fullscreenEnabled ? 'ok' : 'bad', `${brand} on ${navigator.userAgentData?.platform || navigator.platform}`);
   check('display', 'ok', `${screen.width}×${screen.height} at ${devicePixelRatio}x`);
+  check('browser', document.fullscreenEnabled ? 'ok' : 'bad', desktop ? `Desktop app (Electron ${(/Electron\/([\d.]+)/.exec(navigator.userAgent) || [])[1] || ''}, Chromium ${(/Chrome\/(\d+)/.exec(navigator.userAgent) || [])[1] || ''})` : null);
   if (desktop) check('screen', 'ok', 'live overlay on your real desktop (Ctrl+Shift+X stops it)');
   else if (!navigator.mediaDevices?.getDisplayMedia) check('screen', '', 'not supported here, using the built-in desktop');
 
+  hardware();
   check('camera', 'wait'); check('tracker', 'wait');
   $('start').disabled = false; watchEyes();   // keyboard mode works right away; the camera upgrades it
   const video = $('camVideo');
   try {
     if (new URLSearchParams(location.search).get('cam') === '0') throw new Error('camera off');   // rehearsal without a camera
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, frameRate: 30, facingMode: 'user' }, audio: false });
-    video.srcObject = stream; await video.play();
-    const tr = stream.getVideoTracks()[0], st = tr.getSettings();
-    check('camera', 'ok', `${tr.label.replace(/\s*\([0-9a-f:]+\)/i, '')}, ${st.width}×${st.height}`);
+    await useCamera(localStorage.getItem('camera') || undefined);
+    await listCameras();
   } catch (e) {
     check('camera', 'bad', 'no camera: hold Space to close your eyes');
     check('tracker', '', 'keyboard mode'); check('eyes', '', 'hold Space to test');
@@ -68,6 +68,44 @@ function watchEyes() {
     requestAnimationFrame(tick);
   };
   tick();
+}
+
+// ---------- camera choice and hardware ----------
+const camName = (label) => label.replace(/\s*\([0-9a-f]{4}:[0-9a-f]{4}\)/i, '');
+async function useCamera(deviceId) {
+  const video = $('camVideo');
+  video.srcObject?.getTracks().forEach((t) => t.stop());
+  const want = { width: 640, height: 480, frameRate: 30 };
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ video: deviceId ? { ...want, deviceId: { exact: deviceId } } : { ...want, facingMode: 'user' }, audio: false }); }
+  catch (e) { if (!deviceId) throw e; stream = await navigator.mediaDevices.getUserMedia({ video: want, audio: false }); }   // saved camera is gone
+  video.srcObject = stream; await video.play();
+  const tr = stream.getVideoTracks()[0], st = tr.getSettings();
+  check('camera', 'ok', `${camName(tr.label)}, ${st.width}×${st.height} at ${Math.round(st.frameRate || 30)} fps`);
+  return st.deviceId;
+}
+async function listCameras() {
+  const pick = $('camPick'), cams = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput');
+  if (cams.length < 2) return;
+  let current = $('camVideo').srcObject.getVideoTracks()[0].getSettings().deviceId;
+  // first visit: prefer a real webcam over phone, virtual and infrared cameras
+  if (!localStorage.getItem('camera')) {
+    const odd = /virtual|phone|obs|IR|infrared|S\d\d|iphone|pixel|galaxy/i, cur = cams.find((c) => c.deviceId === current);
+    const better = cams.find((c) => !odd.test(c.label));
+    if (better && cur && odd.test(cur.label)) current = await useCamera(better.deviceId);
+  }
+  pick.replaceChildren(...cams.map((c) => { const o = document.createElement('option'); o.value = c.deviceId; o.textContent = camName(c.label) || 'Camera'; o.selected = c.deviceId === current; return o; }));
+  pick.hidden = false;
+  pick.onchange = async () => { localStorage.setItem('camera', pick.value); check('camera', 'wait', 'switching…'); try { await useCamera(pick.value); } catch { check('camera', 'bad', 'could not open that camera'); } };
+}
+async function hardware() {
+  let gpu = '';
+  try { const gl = document.createElement('canvas').getContext('webgl'), ext = gl.getExtension('WEBGL_debug_renderer_info');
+    gpu = (ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : '').replace(/^ANGLE \(([^,]+, )?/, '').replace(/( \(0x[0-9A-F]+\))? Direct3D.*$| OpenGL.*$|,.*$|\)$/gi, '').trim(); } catch {}
+  const native = desktop ? await desktop.hardware().catch(() => null) : null;
+  const cpu = native ? `${native.cpu}, ${native.cores} threads, ${native.ramGb} GB` : `${navigator.hardwareConcurrency || '?'} threads${navigator.deviceMemory ? `, ${navigator.deviceMemory}+ GB` : ''}`;
+  check('hardware', 'ok', [cpu, gpu].filter(Boolean).join(' · '));
+  document.querySelector('#checks [data-k="hardware"] span').title = [cpu, gpu].join(' · ');
 }
 
 // ---------- screen share ----------

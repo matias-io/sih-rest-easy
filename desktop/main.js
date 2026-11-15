@@ -37,6 +37,7 @@ app.whenReady().then(async () => {
     if (on) { win.setBounds(display.bounds); win.showInactive(); } else { win.show(); win.focus(); }
   });
   ipcMain.handle('quit', () => app.quit());
+  ipcMain.handle('hardware', () => { const os = require('node:os'); return { cpu: os.cpus()[0].model.replace(/\s+/g, ' ').trim(), cores: os.cpus().length, ramGb: Math.round(os.totalmem() / 2 ** 30) }; });
   globalShortcut.register(STOP_KEY, () => win.webContents.send('stop'));
 
   if (SMOKE) {
