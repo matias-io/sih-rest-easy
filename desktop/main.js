@@ -3,7 +3,7 @@
 // lets every click and key pass through to your real apps, and is excluded from screen capture.
 // That last part is the trick: the page captures the live screen (without seeing itself) and
 // shows it back distorted, so your real desktop is what gets drunk while you keep using it.
-const { app, BrowserWindow, desktopCapturer, globalShortcut, ipcMain, screen, session } = require('electron');
+const { app, BrowserWindow, desktopCapturer, globalShortcut, ipcMain, screen, session, systemPreferences } = require('electron');
 const { serve } = require('./serve');
 
 // use the machine: discrete/high-performance GPU, GPU rasterization, no copies of video frames
@@ -15,12 +15,27 @@ const SMOKE = process.env.REST_EASY_SMOKE === '1';   // CI-style check: no windo
 const STOP_KEYS = ['CommandOrControl+Shift+X', 'CommandOrControl+Alt+X', 'F9'];
 let win;
 
+// One copy at a time: a second (or hung) copy keeps the camera open and the new one gets no picture.
+if (!SMOKE && !app.requestSingleInstanceLock()) { console.log('Rest Easy is already running.'); app.exit(0); }
+app.on('second-instance', () => { if (win && !win.isDestroyed()) { win.show(); win.focus(); } });
+
+// A fixed port keeps the page's origin, so the saved camera and settings survive restarts.
+async function serveFixed() {
+  for (const port of [8771, 8772, 8773]) { try { return await serve(port); } catch {} }
+  return serve(0);
+}
+
 app.whenReady().then(async () => {
-  const { url } = await serve(0);
+  // macOS asks for the camera once per app; without this getUserMedia fails silently on a fresh Mac.
+  if (process.platform === 'darwin') {
+    try { await systemPreferences.askForMediaAccess('camera'); } catch {}
+    if (systemPreferences.getMediaAccessStatus('screen') !== 'granted') console.log('macOS: allow Screen Recording for Electron in System Settings > Privacy & Security for the live desktop backdrop.');
+  }
+  const { url } = await serveFixed();
   const display = screen.getPrimaryDisplay();
 
   // camera: yes. screen capture: always the primary display, no picker.
-  session.defaultSession.setPermissionRequestHandler((_wc, perm, cb) => cb(['media', 'fullscreen'].includes(perm)));
+  session.defaultSession.setPermissionRequestHandler((_wc, perm, cb) => cb(['media', 'fullscreen', 'display-capture'].includes(perm)));
   session.defaultSession.setPermissionCheckHandler((_wc, perm) => ['media', 'fullscreen'].includes(perm));
   session.defaultSession.setDisplayMediaRequestHandler(async (_req, cb) => {
     const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 0, height: 0 } });   // no thumbnails: they made Start take 15 s
