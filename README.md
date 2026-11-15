@@ -48,6 +48,7 @@ The remaining Android UI sounds in `web/vendor/sounds` are from the Android Open
 Third-party material:
 - Music: DEAF KEV - Invincible [NCS Release], provided by NoCopyrightSounds (`web/vendor/music`). The screen follows it through an audio analyser: calm in the quiet intro, chaos at the drop.
 - Photo: Sam Altman at TechCrunch Disrupt SF 2019, by TechCrunch, CC BY 2.0, via Wikimedia Commons (`web/vendor/img/sam.jpg`). Parody use.
+- Photo: Dario Amodei at TechCrunch Disrupt 2023, Kimberly White / Getty Images for TechCrunch, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), [via Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Dario_Amodei_at_TechCrunch_Disrupt_2023_02_%28close_up_cropped%29.jpg). Existing close-up crop by Nagae Iku, displayed with CSS cropping (`web/vendor/img/dario.jpg`). Parody use; provenance in `web/vendor/img/dario.source.json`.
 - Unused legacy asset: "Sound of American Train Horn Nathan Airchime K5LA" by WeenyBeany, CC BY 4.0, via Wikimedia Commons. Horn playback is disabled.
 
 Timed test run: add `?autorun=60&cycle=20` on the web, or `REST_EASY_QUERY="autorun=60&cycle=20" npm run desktop`. It goes through setup, runs for 60 s closing the eyes every 20 s, and prints a `PERF` line every 5 s (fps, worst frame, tracking time, memory).

@@ -3,7 +3,7 @@
 // ten seconds and then drops, which is the shape of a run: usable, then not.
 // The audio goes through an analyser, so the visuals follow what is actually playing.
 const SRC = new URL('../vendor/music/invincible.mp3', import.meta.url).href;
-export const CREDIT = 'Music: DEAF KEV - Invincible [NCS Release], provided by NoCopyrightSounds · Photo: Sam Altman by TechCrunch, CC BY 2.0 · Horn: WeenyBeany, CC BY 4.0';
+export const CREDIT = 'Music: DEAF KEV - Invincible [NCS Release], provided by NoCopyrightSounds · Photos: Sam Altman by TechCrunch; Dario Amodei by Kimberly White / Getty Images for TechCrunch, both CC BY 2.0';
 let audio = null, ctx = null, an = null, gain = null, buf = null, avg = 0.3, lastBeat = 0;
 // energy 0..1: how loud the music is now. kick 1..0: jumps on each beat, then decays.
 // mode / seed: which glitch the screen does on the beat, re-rolled on some beats.

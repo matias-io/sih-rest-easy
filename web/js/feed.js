@@ -13,7 +13,8 @@ const PICTURES = new URL('../vendor/img/feed/', import.meta.url).href;
 const PHOTOS = [
   { file: 'jensen.jpg', title: 'Jensen Huang', alt: 'Jensen Huang wearing a leather jacket at a conference', caption: 'Your GPU has joined the meeting.' },
   { file: 'lori-and-jensen.jpg', title: 'Lori & Jensen Huang', alt: 'Lori Huang seated beside Jensen Huang', caption: 'This meeting could have been a photo.' },
-  { file: 'fictional-spy.svg', title: 'Agent 404 · fictional spy', alt: 'Cartoon detective wearing a hat and holding a magnifying glass', caption: 'Undercover in the printer queue.', illustration: true }
+  { file: 'fictional-spy.svg', title: 'Agent 404 · fictional spy', alt: 'Cartoon detective wearing a hat and holding a magnifying glass', caption: 'Undercover in the printer queue.', illustration: true },
+  { file: 'matias-gym.jpg', app: 'slack', title: 'Matias', alt: 'Gym meme shared by Matias: a muscular man holding dumbbells', caption: 'Sent an image', fit: 'contain' }
 ];
 // name, icon, chat (shows the sender's avatar and, for Teams, the quick-reply box)
 const APPS = {
@@ -115,7 +116,7 @@ export function createFeed(box, chatlog) {
     }
     const list = FEED[tier];
     const [app, who, msg, buttons, sound] = photo
-      ? ['photos', photo.title, photo.caption]
+      ? [photo.app || 'photos', photo.title, photo.caption]
       : list[used[tier]++ % list.length];
     const [name, mark, kind] = APPS[app];
     const el = document.createElement('div');
@@ -137,13 +138,13 @@ export function createFeed(box, chatlog) {
     if (photo) {
       el.classList.add('photo-toast');
       const img = document.createElement('img');
-      img.className = 'feed-photo' + (photo.illustration ? ' illustration' : '');
+      img.className = 'feed-photo' + (photo.illustration ? ' illustration' : '') + (photo.fit === 'contain' ? ' full-image' : '');
       img.src = PICTURES + photo.file; img.alt = photo.alt; img.decoding = 'async';
       img.onerror = () => img.remove();
-      el.querySelector('.th').after(img);
+      el.querySelector(photo.app ? '.row' : '.th').after(img);
       const dismiss = document.createElement('button');
       dismiss.className = 'x'; dismiss.type = 'button'; dismiss.textContent = '✕';
-      dismiss.setAttribute('aria-label', 'Dismiss photo of ' + photo.title);
+      dismiss.setAttribute('aria-label', (photo.app ? 'Dismiss image from ' : 'Dismiss photo of ') + photo.title);
       el.querySelector('.x').replaceWith(dismiss);
     }
     const stopSound = notify(sound || (call ? app === 'discord' ? 'discordCall' : 'teamsCall' : { slack: 'slack', teams: 'teams', discord: 'discord', outlook: 'email', cal: 'calendar', pager: 'pagerduty', win: 'critical' }[app] || 'system'));

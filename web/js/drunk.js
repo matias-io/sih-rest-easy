@@ -5,6 +5,9 @@ const POPS = ['WOW', '360', 'MLG', 'SAMPLE TEXT', '+100', 'OHHHH', 'NO SLEEP', '
 
 export function createDrunk({ world, fx, mlg, toasts }) {
   const rainbow = document.createElement('div'); rainbow.className = 'rainbow'; mlg.appendChild(rainbow);
+  const darioPhoto = new Image();
+  darioPhoto.src = new URL('../vendor/img/dario.jpg', import.meta.url).href;
+  darioPhoto.alt = 'Dario Amodei at TechCrunch Disrupt';
   let nextGag = 0, shake = 0;
   let nextFilter = 0, lastFilter = '', lastTransform = '', lastToastTransform = '', lastOpacity = '';
   const effects = new Map();
@@ -35,6 +38,15 @@ export function createDrunk({ world, fx, mlg, toasts }) {
     const img = new Image(); img.src = new URL('../vendor/img/sam.jpg', import.meta.url).href; img.alt = '';
     const cap = document.createElement('b'); cap.textContent = SAM[Math.floor(Math.random() * SAM.length)];
     el.append(img, cap); shake = 1;
+  }
+
+  const DARIO = ['Claude has entered the meeting.', 'Your context window has a visitor.', 'The printer is now an agent.'];
+  function dario() {
+    const el = spawn('dario' + (Math.random() < 0.5 ? ' from-left' : ''), {}, 3800);
+    const cap = document.createElement('b'); cap.textContent = 'A WILD DARIO APPEARED!';
+    const line = document.createElement('span'); line.textContent = DARIO[Math.floor(Math.random() * DARIO.length)];
+    el.append(cap, darioPhoto.cloneNode(), line);
+    shake = 1;
   }
 
   // t in seconds, level 0..1, m = the music (energy, kick, mode, seed)
@@ -77,5 +89,5 @@ export function createDrunk({ world, fx, mlg, toasts }) {
   }
 
   function reset() { for (const el of effects.keys()) removeEffect(el); toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
-  return { render, reset, hit, sam };
+  return { render, reset, hit, sam, dario };
 }

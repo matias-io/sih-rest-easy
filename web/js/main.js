@@ -186,7 +186,8 @@ function run() {
   const drunk = createDrunk({ world: $('world'), fx, mlg: $('mlg'), toasts: $('toasts') });
   const feed = createFeed($('toasts'), $('chatlog'));
   const ads = createAds($('ads'));
-  let samAt = 12 + Math.random() * 12;   // he shows up at least once in a one-minute run
+  // Dario gets the first surprise; alternate with Sam so cameos never pile up.
+  let cameoAt = 10 + Math.random() * 8, nextCameo = 'dario';
   const pin = parseFloat(params.get('level')) || 0;   // rehearsal: ?level=0.8 starts there
   // seconds of open eyes from sober to fully gone: ?rise=20 in the URL, or the Speed menu
   const RISE_S = Math.max(3, parseFloat(params.get('rise')) || parseFloat($('speed').value) || 12);
@@ -251,7 +252,11 @@ function run() {
     const m = music(level, closed, t, dt);
     drunk.render(t, level, m);
     ads.tick(t, level, m.energy);
-    if (!closed && level > 0.3 && t > samAt) { drunk.sam(); samAt = t + 16 + Math.random() * 16; }
+    if (!closed && level > 0.3 && t > cameoAt) {
+      drunk[nextCameo]();
+      nextCameo = nextCameo === 'dario' ? 'sam' : 'dario';
+      cameoAt = t + 16 + Math.random() * 16;
+    }
     const hudText = 'awake ' + fmt(awake) + '|BAC ' + (level * 0.4).toFixed(2);
     if (hudText !== lastHud) { lastHud = hudText; [$('hudAwake').textContent, $('hudBac').textContent] = hudText.split('|'); }
 

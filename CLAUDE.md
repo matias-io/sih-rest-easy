@@ -11,5 +11,6 @@ One codebase in `web/` (no build step). `npm run web` serves it on 8770; `npm ru
 - Sound: real Teams, Slack and Discord recordings in `web/vendor/sounds`, with source paths/URLs and hashes in `sources.json`. They remain proprietary. Generic notifications use bundled Windows sounds or `/system-sound/<kind>` locally; AOSP sounds cover rest and UI effects. App sound keys must not be overwritten by the OS probe. Playback is bounded and stops on dismissal, rest and End. See `AGENTS.md`.
 - The NCS track in `web/vendor/music` plays through an analyser in `web/js/music.js`; its `musicState` (energy, kick, mode) drives the shader, DOM transforms and ads.
 - Edit with patch scripts written to a file; inline heredocs with JS quotes break in this shell.
-- `web/js/ads.js` + `web/css/ads.css` (junk pop-up ads, written by Codex): `createAds(host)` -> `tick(t, level, energy)`, `clear()`. Capped at 28 ads.
+- `web/js/ads.js` + `web/css/ads.css` (junk pop-up ads, written by Codex): `createAds(host)` -> `tick(t, level, energy)`, `clear()`. Capped at 6 ads; beat bursts have a 5-second cooldown. Closing an ad dismisses it.
+- Surprise cameos alternate Dario and Sam. Dario is first, 10–18 seconds into the run once eyes are open and level exceeds 0.3. Their timers are owned by `createDrunk()` and cleared on End.
 - DevTools Chrome throttles rAF in a tab that was navigated in the background; open test runs with a new foreground page.
