@@ -114,8 +114,10 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 #faceState { position:absolute; left:0; right:0; bottom:8px; text-align:center; font:700 11px/1 "Segoe UI", system-ui, sans-serif; color:#fff; text-shadow:0 1px 4px #000; z-index:1; }
 .speed { font-size:14px; color:var(--dim); display:flex; gap:10px; align-items:center; }
 .speed select { background:#1b2030; color:var(--ink); border:1px solid #2c3347; border-radius:8px; padding:6px 10px; font:inherit; }
-#rest { position:absolute; inset:0; background:#05060c; display:grid; place-items:center; text-align:center; opacity:0; pointer-events:none; transition:opacity .35s; }
-#rest.on { opacity:.94; }
+#rest { position:absolute; inset:0; z-index:6; background:#000; display:grid; place-items:center; text-align:center; opacity:0; pointer-events:none; transition:opacity .35s; }
+#rest.on { opacity:1; }
+#rest .rest-pic { display:block; width:min(46vw, 420px); max-height:58vh; object-fit:contain; margin:0 auto 18px; border-radius:12px; transform:scale(.85); transition:transform .35s cubic-bezier(.2,1.4,.4,1); }
+#rest.on .rest-pic { transform:scale(1); }
 #rest b { display:block; font-size:clamp(40px,7vw,90px); }
 #rest span { color:var(--dim); font-size:20px; }
 .zz { font-size:34px; letter-spacing:.4em; color:var(--accent); animation:pulse 1.6s infinite; }
@@ -180,7 +182,7 @@ body.desktop #toasts { opacity:1; }
 .haze-lid { opacity:.02; left:-5vw; width:110vw; height:60vh; }
 .haze-lid-top { top:-60vh; background:linear-gradient(to top, transparent, #050308f2 30%, #050308); }
 .haze-lid-bottom { bottom:-60vh; background:linear-gradient(to bottom, transparent, #050308f2 30%, #050308); }
-body.desktop #rest { background:transparent; }
+body.desktop #rest { background:#000; }
 
 /* Club lighting lives around the workspace; the center and controls stay usable. */
 .club { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:3; opacity:0; contain:layout paint style; }
