@@ -51,7 +51,9 @@ export function createAds(host) {
     const element = document.createElement('section');
     element.className = `ad-popup ad-${variant}`;
     element.setAttribute('aria-label', `Joke advertisement: ${title}`);
-    element.style.left = `${-6 + Math.random() * 94}%`;
+    // Mostly down the left and right edges, so the middle of the screen stays fairly clear.
+    const side = Math.random();
+    element.style.left = `${side < 0.45 ? -8 + Math.random() * 22 : side < 0.9 ? 64 + Math.random() * 22 : 25 + Math.random() * 40}%`;
     element.style.top = `${-5 + Math.random() * 91}%`;
     element.style.width = `clamp(165px, ${19 + Math.random() * 17}vw, 390px)`;
     element.style.setProperty('--ad-rotation', `${-9 + Math.random() * 18}deg`);
