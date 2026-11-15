@@ -24,7 +24,7 @@ Everything lives in `web/`. The desktop version is a thin Electron shell (`deskt
 | Run | `npm run web` | `npm run desktop` |
 | Backdrop | a picture of your screen, a live window or tab, or the built-in desktop | your real desktop, live |
 | Your real apps stay usable | no | yes: clicks and typing pass through |
-| Stop | Esc | Ctrl+Shift+X (Cmd+Shift+X on Mac) |
+| Stop | End button or Esc | End button, Ctrl+Alt+X or F9 (Ctrl+Shift+Q quits) |
 
 A browser will not let a page draw over your desktop or pass clicks through, which is why the desktop version exists. Its window is excluded from screen capture, so it can show the live screen back, distorted, without showing itself.
 
@@ -37,4 +37,6 @@ npm run desktop   # the overlay on your real desktop
 npm run deploy    # Cloudflare (sih.matiass.ca)
 ```
 
-Rehearsal switches (web): `?level=0.8` starts drunk, `?cam=0` skips the camera (hold Space to close your eyes), `]` adds drunkenness.
+Speed is set on the setup screen (7 to 35 seconds from sober to gone) or with `?rise=20`. Rehearsal switches (web): `?level=0.8` starts drunk, `?cam=0` skips the camera (hold Space to close your eyes), `]` adds drunkenness. `REST_EASY_VISIBLE=1 npm run desktop` lets screenshots see the overlay (it will also see itself).
+
+Brand icons in `web/vendor/icons` are from simple-icons (CC0); the brands belong to their owners and are used here as parody.

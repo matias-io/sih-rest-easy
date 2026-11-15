@@ -44,6 +44,7 @@
       <div class="meter"><i id="eyeMeter"></i></div>
     </div>
   </div>
+  <label class="speed">Speed <select id="speed"><option value="7">Demo: gone in 7 s</option><option value="12" selected>Fast: 12 s</option><option value="20">Normal: 20 s</option><option value="35">Slow: 35 s</option></select></label>
   <button id="start" class="primary" disabled>Start working</button>
   <p class="fine">No camera? Hold <kbd>Space</kbd> to close your eyes. <kbd>Esc</kbd> ends it.</p>
 </section>
@@ -79,9 +80,10 @@ Type here. Try to get some work done.</textarea>
   </div>
   <div id="toasts"></div>
   <div id="mlg"></div>
-  <div id="hud"><span id="hudAwake">awake 0:00</span><span id="hudBac">screen BAC 0.00</span></div>
+  <div id="hud" data-hit><span class="brand">Rest Easy</span><span id="hudAwake">awake 0:00</span><span id="hudBac">BAC 0.00</span><button id="endBtn" title="End">End</button></div>
+  <div id="facecam"><span id="faceState">open</span></div>
   <div id="rest"><div><div class="zz">z z z</div><b>Resting…</b><span>keep them closed until you hear the bell</span></div></div>
-  <div id="morning">good morning ☀</div>
+  <div id="morning"><b></b><span></span></div>
 </section>
 
 <!-- 4. end -->

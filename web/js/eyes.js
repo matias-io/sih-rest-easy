@@ -3,7 +3,9 @@
 import { FaceLandmarker, FilesetResolver } from '../vendor/mediapipe/vision_bundle.mjs';
 
 const BASE = new URL('../vendor/mediapipe/', import.meta.url).href;
-const CLOSE_AT = 0.5, OPEN_AT = 0.32;   // hysteresis so a half-closed eye does not flicker
+// "Closed" is judged against your own resting reading: looking down at a laptop already reads
+// half-closed, so a fixed cutoff would call that a rest.
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 
 export async function createEyes(video) {
   const files = await FilesetResolver.forVisionTasks(BASE + 'wasm');
@@ -15,7 +17,7 @@ export async function createEyes(video) {
   try { lm = await make('GPU'); } catch { delegate = 'CPU'; lm = await make('CPU'); }
 
   const s = { closed: false, score: 0, face: false, blinks: 0, ms: 0, delegate, forced: false };
-  let last = -1, smooth = 0, listeners = [];
+  let last = -1, smooth = 0, base = 0.15, listeners = [];
   const set = (closed) => { if (closed !== s.closed) { s.closed = closed; if (!closed) s.blinks++; listeners.forEach((f) => f(closed)); } };
 
   function frame() {
@@ -31,7 +33,11 @@ export async function createEyes(video) {
         for (const c of cats) { if (c.categoryName === 'eyeBlinkLeft') l = c.score; else if (c.categoryName === 'eyeBlinkRight') r = c.score; }
         smooth = smooth * 0.4 + ((l + r) / 2) * 0.6;
         s.score = smooth;
-        if (!s.forced) set(s.closed ? smooth > OPEN_AT : smooth > CLOSE_AT);
+        // base follows the open-eye reading: quick to drop, slow to rise, frozen while closed
+        if (!s.closed) base += (smooth - base) * (smooth < base ? 0.3 : 0.015);
+        const closeAt = clamp(base + 0.24, 0.5, 0.74);
+        s.threshold = closeAt;
+        if (!s.forced) set(s.closed ? smooth > closeAt - 0.14 : smooth > closeAt);
       } else if (!s.forced) set(false);   // nobody there counts as awake
     }
     if (video.requestVideoFrameCallback) video.requestVideoFrameCallback(frame); else requestAnimationFrame(frame);
