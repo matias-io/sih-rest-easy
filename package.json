@@ -1,0 +1,16 @@
+{
+  "name": "sih-rest-easy",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Your screen gets drunk the longer you keep your eyes open.",
+  "main": "desktop/main.js",
+  "scripts": {
+    "web": "node desktop/serve.js",
+    "desktop": "electron .",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "electron": "^39.0.0",
+    "wrangler": "^4.0.0"
+  }
+}
