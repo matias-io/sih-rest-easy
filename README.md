@@ -2,6 +2,8 @@
 
 Your screen gets drunk the longer you keep your eyes open. The only fix is to close them.
 
+As BAC rises, 35 random meme effects (including the MLG air horn) pile on over the music and notifications. Rest silences the effects; End stops them. Sources and playback tuning: `web/vendor/chaos/README.md`.
+
 Built at the Stupid Ideas Hackathon, Ottawa, 15 Nov 2026, by Matias Suxo.
 
 **Live:** https://sih.matiass.ca

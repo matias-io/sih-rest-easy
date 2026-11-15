@@ -1,0 +1,216 @@
+{
+  "note": "User-supplied meme recordings. Original ownership/license not established; no open license claimed. Trimmed to at most 5 seconds and loudness-normalized for the app.",
+  "processing": "ffmpeg: -t 5 -af loudnorm=I=-20:TP=-3:LRA=7 -ar 44100 -ac 1 -codec:a libmp3lame -b:a 96k",
+  "files": [
+    {
+      "file": "999-social-credit-siren.mp3",
+      "source": "Deliverables/Rockstar/sfx/999-social-credit-siren.mp3",
+      "source_sha256": "28a53cb4e868f83d9b579e77b978484be1177801a848d7b992b9244789b91aff",
+      "sha256": "ea1a164794bff7d217b2620c99bbce77952d0989c0ccf26b680df472f0731264"
+    },
+    {
+      "file": "a-few-moments-later-sponge-bob-sfx-fun.mp3",
+      "source": "Deliverables/Rockstar/sfx/a-few-moments-later-sponge-bob-sfx-fun.mp3",
+      "source_sha256": "d38814f846f7f23db9fd3a135d659dc8c6aac89a1ef6f83d01d7da52823db335",
+      "sha256": "728cb324cef55030431715a4e407378c806fefea932189cfc185932db4996b0e"
+    },
+    {
+      "file": "ack.mp3",
+      "source": "Deliverables/Rockstar/sfx/ack.mp3",
+      "source_sha256": "6247b97b6e1614ca16325d28ad0d82dd6aee58cf73f68aca6f4f24205a228708",
+      "sha256": "87abe89e6fe06ef709986e5a89f6c1dbc6880896628a01497b392b5d4e29e730"
+    },
+    {
+      "file": "awkward-cricket.mp3",
+      "source": "Deliverables/Rockstar/sfx/awkward-cricket.mp3",
+      "source_sha256": "b703d6f8c9b9979660bd05f4c779903eebb9624725dd5660d81938c646ca85be",
+      "sha256": "5330c6c71fc86ec7c0fc8c2acbbee10ba1a6c4257e98f2781c207e14e0494acb"
+    },
+    {
+      "file": "buzzer.mp3",
+      "source": "Deliverables/Rockstar/sfx/buzzer.mp3",
+      "source_sha256": "d8655fbee9621edd59a7c05a76ea738a728d73eb177f0d2bfe8b2680792c1abc",
+      "sha256": "fc0535e1ca8c39bae1953db80adb308622974ef75e6fa6b8beac9849a163e8f6"
+    },
+    {
+      "file": "censor-beep.mp3",
+      "source": "Deliverables/Rockstar/sfx/censor-beep.mp3",
+      "source_sha256": "025674ef67009a5bb709df2a512510effc55d82d3102230de61254ce0622e22d",
+      "sha256": "2e3a07cd9ab7833811fd82cc0fc50722b7f14d38be211f68abc8182f611f38f6"
+    },
+    {
+      "file": "core-sound-effect.mp3",
+      "source": "Deliverables/Rockstar/sfx/core-sound-effect.mp3",
+      "source_sha256": "0ead4ef1b101bccd7bbe4c760ea8b485d7fd22132c8a793058c5e872c2470073",
+      "sha256": "fafd153c6b0915a04ae17b4f3a5985244323f850bb98aa71a04ec36411cc4ee5"
+    },
+    {
+      "file": "correct-answer-gameshow.mp3",
+      "source": "Deliverables/Rockstar/sfx/correct-answer-gameshow.mp3",
+      "source_sha256": "568a0664435bf3c0db427001150d328ddd45f182432b3721cd68c441fa929d97",
+      "sha256": "e5a8e12d84d2a65e285066a854ea614eeca2d206fba2e7c3a19425504077e375"
+    },
+    {
+      "file": "daddys-home.mp3",
+      "source": "Deliverables/Rockstar/sfx/daddys-home.mp3",
+      "source_sha256": "13b953182fdbae638522543570f8491cfa1794d4fed9cdebec9999d38285b1af",
+      "sha256": "8d1b316ccc27e88bddfa5432dff8e926504516ba4726eb131e3a565094cf7ef9"
+    },
+    {
+      "file": "dexter-meme.mp3",
+      "source": "Deliverables/Rockstar/sfx/dexter-meme.mp3",
+      "source_sha256": "4a716f2a47d4fa230840e14ecc96965ba6be05c62c1cafa9e6f7c540e458a42f",
+      "sha256": "252235c69ec1d7571dbbef498d7f89b50bdc22f33e751dfa17bfef73895b8810"
+    },
+    {
+      "file": "ding-sound-effect.mp3",
+      "source": "Deliverables/Rockstar/sfx/ding-sound-effect.mp3",
+      "source_sha256": "bf9c08a6b942f6c875b07e35de5ebbc3a009c7567a0e9d1a69ff79c0c79e9e81",
+      "sha256": "5f501d2a28ddefe999c67a61689bf548a7ec23227247093a7d58a4993a00e5fa"
+    },
+    {
+      "file": "discord-call.mp3",
+      "source": "Deliverables/Rockstar/sfx/discord-call.mp3",
+      "source_sha256": "1dab60b407c5338a1eaf4df68f92bbaed3fc6160c77ba3b14ba6034d23e4a642",
+      "sha256": "299190d855b59cb644b47ac461dc1b0b8635117e13fe9f502037fdb0aa5d31c1"
+    },
+    {
+      "file": "discord-leave-noise.mp3",
+      "source": "Deliverables/Rockstar/sfx/discord-leave-noise.mp3",
+      "source_sha256": "d6df15ca07e7981f9a2bbb96e22828fe43294343103924b52264485bad7e7079",
+      "sha256": "fd2ddbf59960f2baf1be82231f331415ae819df9a6f66004e4a790194d29eab1"
+    },
+    {
+      "file": "discord-notification.mp3",
+      "source": "Deliverables/Rockstar/sfx/discord-notification.mp3",
+      "source_sha256": "8f4d3150992cf86049b5a7beca5d0e9343b78e8dd9243f6dbe4d03a310ffaee1",
+      "sha256": "5b4cc719c4ddf0bea4dedbb11484741a34a4f4af65e00b5176f6f06a5941fdd7"
+    },
+    {
+      "file": "door-knocking-sound-effect.mp3",
+      "source": "Deliverables/Rockstar/sfx/door-knocking-sound-effect.mp3",
+      "source_sha256": "35d71809fa7452f333c16f77e18f0452b12310302750ee9f95a2eae7935113bf",
+      "sha256": "8c538a581abd42ac24361a1c075b2394d6e4af74e110f6a10a8f5d682be660cb"
+    },
+    {
+      "file": "error-soundss.mp3",
+      "source": "Deliverables/Rockstar/sfx/error-soundss.mp3",
+      "source_sha256": "e5c633eda2370c0e08b4289dbf990d5aa180c00a4cc27de46d9d45b0df3795e8",
+      "sha256": "e0e423a1a697d7db99aa04a5440f85de207c7f758a0da013fb1d47c08157ad29"
+    },
+    {
+      "file": "extremely-loud-incorrect-buzzer.mp3",
+      "source": "Deliverables/Rockstar/sfx/extremely-loud-incorrect-buzzer.mp3",
+      "source_sha256": "85cba82d02ee6bca3771017d0810014e6a8f5e8198e2c859c48c78c5fe0aa301",
+      "sha256": "079ab08d977927ac671ba1f117b6eaa0f412aa83af3594a010d4cb0fb59ffa4d"
+    },
+    {
+      "file": "gah-dayum.mp3",
+      "source": "Deliverables/Rockstar/sfx/gah-dayum.mp3",
+      "source_sha256": "bc65011de08a755ef2b310b5c54acb794f0fcdd80ca25e751956a2051a66a4aa",
+      "sha256": "e27591a6e9efa22eea859be000a9dcc7f1ee300f6d474b1f5a37e15a9507ec29"
+    },
+    {
+      "file": "gta-v-wasted.mp3",
+      "source": "Deliverables/Rockstar/sfx/gta-v-wasted.mp3",
+      "source_sha256": "e95924a8ad7beed439ea6ac264a64f5aca99e65b2e3e1d730b644a565e009b6c",
+      "sha256": "f1fe2c9c5767feef252711e029ba0a0ffdcbd50161160d5aee8a21726c63fbc2"
+    },
+    {
+      "file": "haha-funny-laugh.mp3",
+      "source": "Deliverables/Rockstar/sfx/haha-funny-laugh.mp3",
+      "source_sha256": "70aa1b6af030d506d98276bedfe7f0964bf1174c2aaa5401e239ec22fc433bb0",
+      "sha256": "698a5c19373c126fc76259fb80428ccd56b6b99ffd94f735fd96d81a91b1ff8c"
+    },
+    {
+      "file": "ive-got-this.mp3",
+      "source": "Deliverables/Rockstar/sfx/ive-got-this.mp3",
+      "source_sha256": "d62ea384acdc5ef838c95775087e0d6097d0f2d6cfc851e781921060668a10cc",
+      "sha256": "d1f8c7d796d4d5e472d5c4548ebc80a248ef398cae4a8eaf97ee253ee3bd468b"
+    },
+    {
+      "file": "lagging-loading.mp3",
+      "source": "Deliverables/Rockstar/sfx/lagging-loading.mp3",
+      "source_sha256": "66e5381a0808a68bcc6f3fe61a5255a1acc12227408b413994bed2337dc759a9",
+      "sha256": "9a74cdd6ef028c785e21e05a5205deffef34134046e359af8eccd794a7c9ff62"
+    },
+    {
+      "file": "man-snoring-meme.mp3",
+      "source": "Deliverables/Rockstar/sfx/man-snoring-meme.mp3",
+      "source_sha256": "712c620f662aaea67029f1111cc5eed06c1086a98156e0fbbc8dbf428aa42525",
+      "sha256": "1d06ecfd7974982dcef0a287f59825a075c5c1dfffe2ce0ae49a42e504731387"
+    },
+    {
+      "file": "meme-final.mp3",
+      "source": "Deliverables/Rockstar/sfx/meme-final.mp3",
+      "source_sha256": "d0441222c2e0c8d76899754c777c14a2ad548cf1b4cfef460d6af2f4b2c852ed",
+      "sha256": "383e450171cdbcbcdb0515a32c0c64711f49430cbfa206b9e5589cbf73bf75ab"
+    },
+    {
+      "file": "minecraft-eating-sound.mp3",
+      "source": "Deliverables/Rockstar/sfx/minecraft-eating-sound.mp3",
+      "source_sha256": "1b0a694259b150e2a21c14118dbdc9b31802bb1b9e403a64584595ab4a4f950b",
+      "sha256": "2a5070c686fbfc4a14ff906c5c131a7aa11420ee8ae9be4827534a8ff8d0ec1f"
+    },
+    {
+      "file": "oh-my-god-bro-oh-hell-nah-man.mp3",
+      "source": "Deliverables/Rockstar/sfx/oh-my-god-bro-oh-hell-nah-man.mp3",
+      "source_sha256": "cb6b3179d9964d200929b8733a57a972a7c7b1a64dfd8b16e8e691e8c205b238",
+      "sha256": "8f06cbad8fc0bafb9704da6433f99645f95452d0468bddd3382f8cbc17b1744d"
+    },
+    {
+      "file": "oh-my-god-meme.mp3",
+      "source": "Deliverables/Rockstar/sfx/oh-my-god-meme.mp3",
+      "source_sha256": "a7644c29ba16e100b3d57d171539691e302545ca098ff18c77cc8748178ae0df",
+      "sha256": "63a729d93990cc71c75cb437d774daa4137dee070d876d021c2fc9af829a7754"
+    },
+    {
+      "file": "oh-no-no-no-laugh.mp3",
+      "source": "Deliverables/Rockstar/sfx/oh-no-no-no-laugh.mp3",
+      "source_sha256": "9b1de3a2c69eb6491ce49e58bf965e7804da20c3012e6e59fa8bf30d06a11f33",
+      "sha256": "6b7c7c57f1e947d1e1ca6e4314b557ad70c1b7e120859272bec3c5c3c2cf82ba"
+    },
+    {
+      "file": "popular-riser-metallic-sound-effect.mp3",
+      "source": "Deliverables/Rockstar/sfx/popular-riser-metallic-sound-effect.mp3",
+      "source_sha256": "3e7b86b6f87614c6b8cf46c471cdd64eb4028ab871c8228d3da77751653a5778",
+      "sha256": "52cf707efbeab650423fecc6cbf210f332b7263e668fef50c1ea2a3633ea68b2"
+    },
+    {
+      "file": "punch-sound.mp3",
+      "source": "Deliverables/Rockstar/sfx/punch-sound.mp3",
+      "source_sha256": "ac37eec2d00a9be2613c0ec1bf334775cc6df286b555e1ff4074d448b9b4260c",
+      "sha256": "a8a9ba16c7c4712417aa2f7d7b1c4fa7a5014d66f7d514a5fd8fd23b67808d4c"
+    },
+    {
+      "file": "running-sound.mp3",
+      "source": "Deliverables/Rockstar/sfx/running-sound.mp3",
+      "source_sha256": "44f539b9b7316659b258a3a53297298cc9fb08937c0427c570968cd8ad1a6790",
+      "sha256": "6b33458c39a685b8a35c6dbe407abad97fc1f34a4d74d2d59320dc6c8102bce7"
+    },
+    {
+      "file": "snore-mimimimimimi.mp3",
+      "source": "Deliverables/Rockstar/sfx/snore-mimimimimimi.mp3",
+      "source_sha256": "9c459766ddfbe6156b8f5cd1539102b0207937f490aa449e62837d34795dc015",
+      "sha256": "3c61db9d1b35a484ae17e9067918debb7d4b1c1a01da1d610da79f6abb5a2a75"
+    },
+    {
+      "file": "the-undertaker-bell.mp3",
+      "source": "Deliverables/Rockstar/sfx/the-undertaker-bell.mp3",
+      "source_sha256": "1c45d5f18fa52ede20d3f44ea1ea87f61e517b2c8dfb69794d1e5799ec7ebb16",
+      "sha256": "105e68e199576b50f4f338e593da0f9c72709ee0bfb43c31fd9a39e2290cb1a8"
+    },
+    {
+      "file": "yippeeeeeeeeeeeeee.mp3",
+      "source": "Deliverables/Rockstar/sfx/yippeeeeeeeeeeeeee.mp3",
+      "source_sha256": "cb3e6f1c199eeb5c277c51daa00aa6446966b45fff940ef5a2b5ca51aa7825c8",
+      "sha256": "0e67335477a27d8a9d83081d9cc8250bb258f30d2f975d992579243d7e303621"
+    },
+    {
+      "file": "mlg-air-horn.mp3",
+      "source": "Deliverables/Rockstar/sfx/mlg-air-horn.mp3",
+      "source_sha256": "95beb8827452fab91d38535bbfd359b5e59547e2f98a937cb01032d3dced930c",
+      "sha256": "4b60d97113c0b6db3e1abf549c47469a698e9a7097fcbb314bb8121a91492d4b"
+    }
+  ]
+}

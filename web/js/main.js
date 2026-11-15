@@ -4,6 +4,7 @@ import { createFx } from './fx.js';
 import { createFeed } from './feed.js';
 import { loadMusic, startMusic, music, stopMusic, musicState, CREDIT } from './music.js';
 import { createAds } from './ads.js';
+import { createChaos } from './chaos.js';
 import { createMascotEyes } from './mascot.js';
 import { initAudio, ding, rest as restSound, wake, probeSystemSounds, stopSounds } from './audio.js';
 
@@ -208,6 +209,7 @@ function run() {
   const drunk = createDrunk({ world: $('world'), fx, mlg: $('mlg'), toasts: $('toasts') });
   const feed = createFeed($('toasts'), $('chatlog'));
   const ads = createAds($('ads'));
+  const chaos = createChaos();
   // Dario gets the first surprise; alternate with Sam so cameos never pile up.
   let cameoAt = 10 + Math.random() * 8, nextCameo = 'dario';
   const pin = parseFloat(params.get('level')) || 0;   // rehearsal: ?level=0.8 starts there
@@ -238,7 +240,7 @@ function run() {
     eyes.pause?.();
     $('morning').classList.remove('on');
     removeEventListener('pointerdown', onClick); removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs);
-    restSound(false); stopMusic(); stopSounds(); ads.clear(); $('credit').textContent = CREDIT; drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
+    restSound(false); stopMusic(); stopSounds(); chaos.clear(); ads.clear(); $('credit').textContent = CREDIT; drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
     $('liveBg').srcObject?.getTracks().forEach((x) => x.stop()); $('liveBg').srcObject = null; fx.clear(); share = null;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     $('endTime').textContent = fmt(total); $('endBac').textContent = (peak * 0.4).toFixed(2); $('endRests').textContent = rests;
@@ -272,6 +274,7 @@ function run() {
     if (ring + face !== lastRing) { lastRing = ring + face; $('hud').style.setProperty('--ring', ring); $('facecam').style.setProperty('--ring', closed ? 'var(--accent)' : ring); $('faceState').textContent = face; }
 
     const m = music(level, closed, t, dt);
+    chaos.tick(t, level, closed);
     drunk.render(t, level, m);
     ads.tick(t, level, m.energy);
     if (!closed && level > 0.3 && t > cameoAt) {
