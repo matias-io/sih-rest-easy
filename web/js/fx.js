@@ -3,7 +3,7 @@
 // double vision, colour split, soft blur, saturation and hue. The CPU only uploads the frame.
 const VERT = `attribute vec2 p; varying vec2 uv; void main(){ uv = p * 0.5 + 0.5; gl_Position = vec4(p, 0.0, 1.0); }`;
 const FRAG = `precision mediump float;
-uniform sampler2D tex; uniform float t, lvl, en, kick, mode, seed; uniform vec2 fit, hueCS; uniform vec3 motion; varying vec2 uv;
+uniform sampler2D tex; uniform float t, lvl, en, kick, mode, seed, desktop; uniform vec2 fit, hueCS; uniform vec3 motion; varying vec2 uv;
 float hash(float n){ return fract(sin(n * 12.9898 + seed) * 43758.5453); }
 vec3 hue(vec3 c){ const vec3 k = vec3(0.57735); return c * hueCS.x + cross(k, c) * hueCS.y + k * dot(k, c) * (1.0 - hueCS.x); }
 vec3 samp(vec2 q){ vec2 s = (q - 0.5) / fit + 0.5; if (s.x < 0.0 || s.x > 1.0 || s.y < 0.0 || s.y > 1.0) return vec3(0.0); return texture2D(tex, s).rgb; }
@@ -13,6 +13,20 @@ void main(){
   float amp = 0.3 + 0.7 * en;                                   // quiet music, calm screen
   float sway = max(0.0, lvl - 0.08) * amp, deep = max(0.0, lvl - 0.4) / 0.6 * amp, mlg = max(0.0, lvl - 0.72) / 0.28 * amp;
   float k = kick * smoothstep(0.25, 0.7, lvl);                    // the beat, once the screen is far enough gone
+  if (desktop > 0.5) {
+    // A bounded ghost image over the real desktop: no flips, mirrors or torn
+    // coordinates that would make the visible controls disagree with clicks.
+    float strength = smoothstep(0.08, 1.0, lvl);
+    float pulse = 0.7 + 0.2 * en + 0.1 * k;
+    vec2 drift = vec2(sin(t * 0.8), cos(t * 0.65)) * strength * pulse * 0.003;
+    vec2 q = uv + drift;
+    float r = strength * (0.001 + 0.002 * pulse);
+    vec3 blurred = (samp(q) * 2.0 + samp(q + vec2(r, r)) + samp(q - vec2(r, r))
+      + samp(q + vec2(r, -r)) + samp(q + vec2(-r, r))) / 6.0;
+    vec3 ghost = samp(q + vec2(0.006, 0.002) * strength * pulse);
+    gl_FragColor = vec4(mix(blurred, ghost, strength * 0.25), 1.0);
+    return;
+  }
   vec2 q = uv;
   q = (q - 0.5) * (1.0 - 0.07 * k) + 0.5;                         // every beat punches in
   if (mode < 0.5) { q.x += (hash(floor(q.y * 14.0)) - 0.5) * 0.25 * k; }                    // torn slices
@@ -50,6 +64,7 @@ export function createFx(canvas) {
   for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   const U = { t: gl.getUniformLocation(prog, 't'), lvl: gl.getUniformLocation(prog, 'lvl'), fit: gl.getUniformLocation(prog, 'fit'), en: gl.getUniformLocation(prog, 'en'), kick: gl.getUniformLocation(prog, 'kick'), mode: gl.getUniformLocation(prog, 'mode'), seed: gl.getUniformLocation(prog, 'seed'), hueCS: gl.getUniformLocation(prog, 'hueCS'), motion: gl.getUniformLocation(prog, 'motion') };
+  U.desktop = gl.getUniformLocation(prog, 'desktop');
 
   let src = null, contain = false, still = false, uploaded = false, lastTime = -1, through = false, off = false;
   let frameCallback = null, frameReady = true, sizeDirty = true, cssWidth = 0, cssHeight = 0;
@@ -82,9 +97,12 @@ export function createFx(canvas) {
       fx.active = true; canvas.hidden = false;
       if (!still && el.requestVideoFrameCallback) watchFrames(el);
     },
-    clear() { stopFrames(); src = null; fx.active = false; canvas.hidden = true; },
+    clear() { stopFrames(); src = null; fx.active = false; canvas.hidden = true; canvas.style.opacity = ''; },
     draw(t, level, m = { energy: 1, kick: 0, mode: 0, seed: 0 }) {
       if (!src) return;
+      // At least 72% of the live desktop remains visible even at maximum BAC.
+      // BAC sets the floor; music gently modulates the blur layer above it.
+      canvas.style.opacity = through ? (Math.max(0, Math.min(1, (level - 0.08) / 0.92)) * (0.20 + 0.06 * Math.max(0, Math.min(1, m.energy)) + 0.02 * Math.max(0, Math.min(1, m.kick)))).toFixed(3) : '1';
       const hide = through && level < 0.08;
       if (hide !== off) { off = hide; canvas.style.visibility = hide ? 'hidden' : ''; }
       if (hide) return;
@@ -107,6 +125,7 @@ export function createFx(canvas) {
       let fx_ = 1, fy = 1;
       if (contain) { const ra = sw / shh, ca = w / h; if (ra > ca) fy = ca / ra; else fx_ = ra / ca; }
       gl.uniform1f(U.en, m.energy); gl.uniform1f(U.kick, m.kick); gl.uniform1f(U.mode, m.mode); gl.uniform1f(U.seed, m.seed);
+      gl.uniform1f(U.desktop, through ? 1 : 0);
       gl.uniform1f(U.t, t); gl.uniform1f(U.lvl, level); gl.uniform2f(U.fit, fx_, fy);
       // These oscillations are identical for every pixel: calculate them once per frame.
       const amp = 0.3 + 0.7 * m.energy;

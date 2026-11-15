@@ -1,9 +1,12 @@
 // Turns one number (level, 0 sober to 1 gone) into what the screen looks like.
 import { hitmarker } from './audio.js';
+import { createClub } from './club.js';
 
 const POPS = ['WOW', '360', 'MLG', 'SAMPLE TEXT', '+100', 'OHHHH', 'NO SLEEP', 'GET REKT', 'BLINK = NOOB', '404 SLEEP'];
 
 export function createDrunk({ world, fx, mlg, toasts }) {
+  const desktop = !!window.restEasyDesktop;
+  const club = createClub(mlg.parentElement);
   const rainbow = document.createElement('div'); rainbow.className = 'rainbow'; mlg.appendChild(rainbow);
   const darioPhoto = new Image();
   darioPhoto.src = new URL('../vendor/img/dario.jpg', import.meta.url).href;
@@ -51,6 +54,7 @@ export function createDrunk({ world, fx, mlg, toasts }) {
 
   // t in seconds, level 0..1, m = the music (energy, kick, mode, seed)
   function render(t, level, m = { energy: 1, kick: 0, mode: 0, seed: 0 }) {
+    club.render(t, level, m);
     const amp = 0.3 + 0.7 * m.energy;                  // quiet music, calm screen
     const sway = Math.max(0, level - 0.08) * amp;      // nothing at all for the first few seconds
     const deep = Math.max(0, level - 0.4) / 0.6 * amp; // 0..1 over the second half
@@ -63,11 +67,11 @@ export function createDrunk({ world, fx, mlg, toasts }) {
     const dy = Math.cos(t * 0.5) * sway * 14 + (Math.random() - 0.5) * (mlgAmt * 14 + shake * 30 + k * 18);
     const sc = 1 + sway * 0.05 + Math.sin(t * 1.3) * deep * 0.04 + k * 0.05;
     const skew = Math.sin(t * 1.1) * deep * 5;
-    const transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) skewX(${skew.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+    const transform = desktop ? 'none' : `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) skewX(${skew.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
     if (transform !== lastTransform) world.style.transform = lastTransform = transform;
 
     // notifications sway with the room but stay sharp, so the jokes stay readable
-    const toastTransform = `translate(${(dx * 0.5).toFixed(1)}px,${(dy * 0.5).toFixed(1)}px) rotate(${(rot * 0.6).toFixed(2)}deg)`;
+    const toastTransform = desktop ? `translateY(${(Math.sin(t) * sway * 3).toFixed(1)}px)` : `translate(${(dx * 0.5).toFixed(1)}px,${(dy * 0.5).toFixed(1)}px) rotate(${(rot * 0.6).toFixed(2)}deg)`;
     if (toastTransform !== lastToastTransform) toasts.style.transform = lastToastTransform = toastTransform;
 
     if (fx.active) {
@@ -83,11 +87,11 @@ export function createDrunk({ world, fx, mlg, toasts }) {
       if (filter !== lastFilter) world.style.filter = lastFilter = filter;
     }
 
-    const opacity = (mlgAmt * 0.35).toFixed(2);
+    const opacity = (mlgAmt * (desktop ? 0.04 : 0.35)).toFixed(2);
     if (opacity !== lastOpacity) rainbow.style.opacity = lastOpacity = opacity;
-    if (mlgAmt > 0 && (t > nextGag || (m.beat && Math.random() < 0.5))) { gag(); nextGag = t + rnd(0.25, 1.1 - mlgAmt * 0.6); }
+    if (mlgAmt > 0 && (t > nextGag || (!desktop && m.beat && Math.random() < 0.5))) { gag(); nextGag = t + (desktop ? rnd(4, 7) : rnd(0.25, 1.1 - mlgAmt * 0.6)); }
   }
 
-  function reset() { for (const el of effects.keys()) removeEffect(el); toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
+  function reset() { club.clear(); for (const el of effects.keys()) removeEffect(el); toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
   return { render, reset, hit, sam, dario };
 }

@@ -160,6 +160,19 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 /* ---------- desktop app: the window is transparent, the stage shows the live screen ---------- */
 html.desktop, body.desktop, body.desktop #stage { background:transparent; }
 body.desktop .screen { background:var(--bg); }
+/* Keep the real applications readable through every decorative layer. */
+body.desktop #mlg, body.desktop #ads { opacity:.25; }
+body.desktop #toasts { opacity:.65; }
+body.desktop #rest { background:transparent; }
+
+/* Club lighting lives around the workspace; the center and controls stay usable. */
+.club { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:3; opacity:0; contain:layout paint style; }
+.club * { pointer-events:none; }
+.club { mask-image:radial-gradient(ellipse at 50% 50%, #0005, #0008 35%, #000 70%); }
+.club-wash { position:absolute; inset:0; background:radial-gradient(ellipse at 0 35%, #ff00bb70, transparent 46%), radial-gradient(ellipse at 100% 65%, #00eaff70, transparent 46%), radial-gradient(ellipse at 50% 110%, #873aff65, transparent 48%); }
+.club-beam { position:absolute; top:-5vh; width:45vw; height:125vh; margin-left:-22.5vw; transform-origin:50% 0; background:conic-gradient(from 166deg at 50% 0, transparent, color-mix(in srgb, var(--light) 24%, transparent) 9deg, color-mix(in srgb, var(--light) 42%, transparent) 14deg, color-mix(in srgb, var(--light) 24%, transparent) 19deg, transparent 28deg); mask-image:linear-gradient(#000, #0008 50%, transparent 90%); }
+.club-ball { position:absolute; top:18px; right:28px; font-size:clamp(38px, 5vw, 68px); line-height:1.2; }
+.club-sign { position:absolute; bottom:20px; left:50%; transform:translateX(-50%) rotate(-2deg); max-width:65vw; padding:7px 16px; border:2px solid #00eaff; border-radius:8px; color:#fff; background:#30084988; font:900 clamp(12px, 1.6vw, 23px)/1.1 system-ui,sans-serif; letter-spacing:.08em; text-align:center; text-shadow:2px 2px #ff16bb; box-shadow:0 0 18px #ff16bb55, inset 0 0 12px #00eaff44; }
 
 .checks select { grid-column:2 / -1; background:#1b2030; color:var(--ink); border:1px solid #2c3347; border-radius:8px; padding:6px 10px; font:inherit; font-size:14px; width:100%; }
 
