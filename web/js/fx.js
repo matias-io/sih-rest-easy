@@ -3,15 +3,25 @@
 // double vision, colour split, soft blur, saturation and hue. The CPU only uploads the frame.
 const VERT = `attribute vec2 p; varying vec2 uv; void main(){ uv = p * 0.5 + 0.5; gl_Position = vec4(p, 0.0, 1.0); }`;
 const FRAG = `precision mediump float;
-uniform sampler2D tex; uniform float t, lvl; uniform vec2 fit; varying vec2 uv;
+uniform sampler2D tex; uniform float t, lvl, en, kick, mode, seed; uniform vec2 fit; varying vec2 uv;
+float hash(float n){ return fract(sin(n * 12.9898 + seed) * 43758.5453); }
 vec3 hue(vec3 c, float a){ const vec3 k = vec3(0.57735); float ca = cos(a), sa = sin(a); return c * ca + cross(k, c) * sa + k * dot(k, c) * (1.0 - ca); }
 vec3 samp(vec2 q){ vec2 s = (q - 0.5) / fit + 0.5; if (s.x < 0.0 || s.x > 1.0 || s.y < 0.0 || s.y > 1.0) return vec3(0.0); return texture2D(tex, s).rgb; }
 void main(){
-  float sway = max(0.0, lvl - 0.08), deep = max(0.0, lvl - 0.4) / 0.6, mlg = max(0.0, lvl - 0.72) / 0.28;
+  float amp = 0.3 + 0.7 * en;                                   // quiet music, calm screen
+  float sway = max(0.0, lvl - 0.08) * amp, deep = max(0.0, lvl - 0.4) / 0.6 * amp, mlg = max(0.0, lvl - 0.72) / 0.28 * amp;
+  float k = kick * smoothstep(0.25, 0.7, lvl);                    // the beat, once the screen is far enough gone
   vec2 q = uv;
+  q = (q - 0.5) * (1.0 - 0.07 * k) + 0.5;                         // every beat punches in
+  if (mode < 0.5) { q.x += (hash(floor(q.y * 14.0)) - 0.5) * 0.25 * k; }                    // torn slices
+  else if (mode < 1.5) { if (k > 0.3) q.x = 0.5 - abs(q.x - 0.5); }                         // mirror
+  else if (mode < 2.5) { float px = mix(500.0, 36.0, k); q = floor(q * px) / px; }          // pixels
+  else if (mode < 3.5) { if (k > 0.4) q = fract(q * 2.0); }                                 // four screens
+  else if (mode < 4.5) { if (k > 0.5) q = 1.0 - q; }                                        // upside down
+  else if (mode < 5.5) { vec2 c2 = q - 0.5; float an = k * 2.5 * (0.6 - length(c2)); q = 0.5 + vec2(c2.x * cos(an) - c2.y * sin(an), c2.x * sin(an) + c2.y * cos(an)); }   // swirl
   q += vec2(sin(q.y * 7.0 + t * 1.3), cos(q.x * 6.0 + t * 1.1)) * (0.004 * sway + 0.022 * deep);   // wobble
   q.x += sin(q.y * 23.0 + t * 3.0) * 0.006 * mlg;
-  float ca = 0.002 * sway + 0.008 * deep;                                                             // colour split
+  float ca = 0.002 * sway + 0.008 * deep + ((mode > 5.5 && mode < 6.5) ? 0.035 * k : 0.0);                                                             // colour split
   vec3 a = vec3(samp(q + vec2(ca, 0.0)).r, samp(q).g, samp(q - vec2(ca, 0.0)).b);
   vec3 b = samp(q + vec2(sin(t * 1.4) * 0.02, cos(t * 1.1) * 0.008) * sway);                           // double vision
   vec3 c = mix(a, b, min(0.5, sway * 0.7));
@@ -21,6 +31,8 @@ void main(){
   float l = dot(c, vec3(0.299, 0.587, 0.114));
   c = mix(vec3(l), c, 1.0 + deep * 1.2 + mlg * 2.0);
   c = hue(c, deep * sin(t * 0.6) * 1.2 + mlg * t * 4.2);
+  if (mode > 6.5 && k > 0.5) c = 1.0 - c;                         // negative
+  c += k * 0.10 * mlg;
   gl_FragColor = vec4(c, 1.0);
 }`;
 
@@ -35,7 +47,7 @@ export function createFx(canvas) {
   gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
   for (const [k, v] of [[gl.TEXTURE_MIN_FILTER, gl.LINEAR], [gl.TEXTURE_MAG_FILTER, gl.LINEAR], [gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE], [gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE]]) gl.texParameteri(gl.TEXTURE_2D, k, v);
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-  const U = { t: gl.getUniformLocation(prog, 't'), lvl: gl.getUniformLocation(prog, 'lvl'), fit: gl.getUniformLocation(prog, 'fit') };
+  const U = { t: gl.getUniformLocation(prog, 't'), lvl: gl.getUniformLocation(prog, 'lvl'), fit: gl.getUniformLocation(prog, 'fit'), en: gl.getUniformLocation(prog, 'en'), kick: gl.getUniformLocation(prog, 'kick'), mode: gl.getUniformLocation(prog, 'mode'), seed: gl.getUniformLocation(prog, 'seed') };
 
   let src = null, contain = false, still = false, uploaded = false, lastTime = -1, through = false, off = false;
   const fx = {
@@ -44,7 +56,7 @@ export function createFx(canvas) {
     // seeThrough (desktop app): while sober, hide the picture so the real desktop shows with no capture delay
     setSource(el, opts = {}) { through = !!opts.seeThrough; off = false; canvas.style.visibility = ''; src = el; contain = !!opts.contain; still = !(el instanceof HTMLVideoElement); uploaded = false; lastTime = -1; fx.active = true; canvas.hidden = false; },
     clear() { src = null; fx.active = false; canvas.hidden = true; },
-    draw(t, level) {
+    draw(t, level, m = { energy: 1, kick: 0, mode: 0, seed: 0 }) {
       if (!src) return;
       const hide = through && level < 0.08;
       if (hide !== off) { off = hide; canvas.style.visibility = hide ? 'hidden' : ''; }
@@ -60,6 +72,7 @@ export function createFx(canvas) {
       if (!uploaded) return;
       let fx_ = 1, fy = 1;
       if (contain) { const ra = sw / shh, ca = w / h; if (ra > ca) fy = ca / ra; else fx_ = ra / ca; }
+      gl.uniform1f(U.en, m.energy); gl.uniform1f(U.kick, m.kick); gl.uniform1f(U.mode, m.mode); gl.uniform1f(U.seed, m.seed);
       gl.uniform1f(U.t, t); gl.uniform1f(U.lvl, level); gl.uniform2f(U.fit, fx_, fy);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     }

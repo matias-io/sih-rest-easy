@@ -20,37 +20,48 @@ export function createDrunk({ world, fx, mlg, toasts }) {
     else { spawn('shades', {}, 3000); airhorn(); shake = 1; }
   }
 
-  // t in seconds, level 0..1
-  function render(t, level) {
-    const sway = Math.max(0, level - 0.08);          // nothing at all for the first few seconds
-    const deep = Math.max(0, level - 0.4) / 0.6;      // 0..1 over the second half
-    const mlgAmt = Math.max(0, level - 0.72) / 0.28;  // 0..1 at the very end
+  const SAM = ['hey. need $7 trillion by EOD', 'you up?', 'close your eyes. I am scaling.', 'are you AGI yet', 'this meeting could have been a GPU'];
+  function sam() {
+    const el = spawn('sam', { left: rnd(4, 62) + '%', '--r': rnd(-14, 14) + 'deg' }, 2700);
+    el.style.setProperty('--r', rnd(-14, 14) + 'deg');
+    const img = new Image(); img.src = new URL('../vendor/img/sam.jpg', import.meta.url).href; img.alt = '';
+    const cap = document.createElement('b'); cap.textContent = SAM[Math.floor(Math.random() * SAM.length)];
+    el.append(img, cap); airhorn(); shake = 1;
+  }
+
+  // t in seconds, level 0..1, m = the music (energy, kick, mode, seed)
+  function render(t, level, m = { energy: 1, kick: 0, mode: 0, seed: 0 }) {
+    const amp = 0.3 + 0.7 * m.energy;                  // quiet music, calm screen
+    const sway = Math.max(0, level - 0.08) * amp;      // nothing at all for the first few seconds
+    const deep = Math.max(0, level - 0.4) / 0.6 * amp; // 0..1 over the second half
+    const mlgAmt = Math.max(0, level - 0.72) / 0.28 * amp;
+    const k = m.kick * Math.min(1, Math.max(0, (level - 0.25) / 0.45));   // the beat
     shake *= 0.86;
 
-    const rot = Math.sin(t * 0.9) * sway * 4 + Math.sin(t * 2.3) * deep * 3 + (Math.random() - 0.5) * shake * 6;
-    const dx = Math.sin(t * 0.7) * sway * 26 + (Math.random() - 0.5) * (mlgAmt * 14 + shake * 30);
-    const dy = Math.cos(t * 0.5) * sway * 16 + (Math.random() - 0.5) * (mlgAmt * 14 + shake * 30);
-    const sc = 1 + sway * 0.05 + Math.sin(t * 1.3) * deep * 0.04;
+    const rot = Math.sin(t * 0.9) * sway * 3 + Math.sin(t * 2.3) * deep * 3 + (Math.random() - 0.5) * (shake * 6 + k * deep * 5);
+    const dx = Math.sin(t * 0.7) * sway * 22 + (Math.random() - 0.5) * (mlgAmt * 14 + shake * 30 + k * 18);
+    const dy = Math.cos(t * 0.5) * sway * 14 + (Math.random() - 0.5) * (mlgAmt * 14 + shake * 30 + k * 18);
+    const sc = 1 + sway * 0.05 + Math.sin(t * 1.3) * deep * 0.04 + k * 0.05;
     const skew = Math.sin(t * 1.1) * deep * 5;
-    world.style.transform = `translate(${dx}px,${dy}px) rotate(${rot}deg) skewX(${skew}deg) scale(${sc})`;
+    world.style.transform = `translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) rotate(${rot.toFixed(2)}deg) skewX(${skew.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
 
     // notifications sway with the room but stay sharp, so the jokes stay readable
     toasts.style.transform = `translate(${(dx * 0.5).toFixed(1)}px,${(dy * 0.5).toFixed(1)}px) rotate(${(rot * 0.6).toFixed(2)}deg)`;
 
     if (fx.active) {
-      fx.draw(t, level);            // picture or live video: everything happens on the GPU
+      fx.draw(t, level, m);         // picture or live video: everything happens on the GPU
       world.style.filter = '';
     } else {
       // built-in desktop (real DOM): compositor-only filters, nothing that needs the CPU
       const blur = sway * 1.1 + Math.max(0, Math.sin(t * 0.8)) * deep * 1.6;
       const hue = deep * Math.sin(t * 0.6) * 70 + mlgAmt * ((t * 240) % 360);
-      world.style.filter = level < 0.08 ? '' : `blur(${blur.toFixed(2)}px) saturate(${(1 + deep * 1.2 + mlgAmt * 2).toFixed(2)}) hue-rotate(${hue.toFixed(0)}deg)`;
+      world.style.filter = level < 0.08 ? '' : `blur(${blur.toFixed(2)}px) saturate(${(1 + deep * 1.2 + mlgAmt * 2).toFixed(2)}) hue-rotate(${hue.toFixed(0)}deg)${m.mode === 7 && k > 0.5 ? ' invert(1)' : ''}`;
     }
 
     rainbow.style.opacity = (mlgAmt * 0.35).toFixed(2);
-    if (mlgAmt > 0 && t > nextGag) { gag(); nextGag = t + rnd(0.25, 1.1 - mlgAmt * 0.6); }
+    if (mlgAmt > 0 && (t > nextGag || (m.beat && Math.random() < 0.5))) { gag(); nextGag = t + rnd(0.25, 1.1 - mlgAmt * 0.6); }
   }
 
   function reset() { toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
-  return { render, reset, hit };
+  return { render, reset, hit, sam };
 }

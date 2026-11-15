@@ -109,7 +109,12 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 #morning.on { animation:morning 3s ease both; }
 @keyframes morning { 0% { opacity:0; transform:translateX(-50%) translateY(-10px) scale(.9); } 10%,80% { opacity:1; transform:translateX(-50%) scale(1); } 100% { opacity:0; transform:translateX(-50%) translateY(-8px); } }
 
-.music { position:fixed; left:-400px; bottom:0; width:320px; height:180px; border:0; opacity:0; pointer-events:none; }
+#ads { position:absolute; inset:0; pointer-events:none; overflow:hidden; z-index:3; }
+#mlg, #toasts { z-index:4; }   /* ads sit under the jokes and the End button */
+.sam { position:absolute; bottom:0; width:min(44vw,520px); animation:sam 2.7s cubic-bezier(.2,1.4,.4,1) forwards; transform-origin:50% 100%; }
+.sam img { display:block; width:100%; border-radius:18px 18px 0 0; border:6px solid #fff; border-bottom:0; }
+.sam b { position:absolute; left:50%; top:-34px; transform:translateX(-50%); white-space:nowrap; background:#fff; color:#111; font:700 20px/1 system-ui, sans-serif; padding:10px 16px; border-radius:18px; }
+@keyframes sam { 0% { transform:translateY(110%) rotate(var(--r,0deg)); } 18%,78% { transform:translateY(8%) rotate(var(--r,0deg)); } 100% { transform:translateY(120%) rotate(var(--r,0deg)); } }
 .credit { font-size:12px; opacity:.55; margin-top:18px; }
 #mlg { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
 .hit { position:absolute; width:46px; height:46px; margin:-23px; animation:hit .35s ease-out forwards; }

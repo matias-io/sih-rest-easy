@@ -5,7 +5,7 @@
 const DIR = new URL('../vendor/sounds/', import.meta.url).href;
 const FILES = {
   message: 'Proxima', email: 'Polaris', calendar: 'Spica', system: 'Tejat', critical: 'LowBattery', call: 'Andromeda',
-  bell: 'ChargingStarted', wake: 'Unlock', sleep: 'Lock', tick: 'camera_click', horn: 'Argon'
+  bell: 'ChargingStarted', wake: 'Unlock', sleep: 'Lock', tick: 'camera_click', horn: 'airhorn'
 };
 const SYSTEM_KINDS = ['message', 'email', 'calendar', 'call', 'system', 'critical'];
 const bank = {};
@@ -33,6 +33,6 @@ function play(kind, volume = 0.6, maxMs = 0) {
 export const notify = (kind = 'system') => play(bank[kind] ? kind : 'system', 0.55, kind === 'call' ? 2600 : 0);
 export const ding = () => play('bell', 0.7);          // fully sober: you can open your eyes
 export const hitmarker = () => play('tick', 0.5);
-export const airhorn = () => play('horn', 0.45, 1100);
+export const airhorn = () => play('horn', 0.5, 1500);   // a real air horn recording
 export function rest(on) { if (on !== rest.on) { rest.on = on; if (on) play('sleep', 0.5); } }
 export const wake = () => play('wake', 0.5);

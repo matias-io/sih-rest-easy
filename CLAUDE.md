@@ -6,5 +6,7 @@ One codebase in `web/` (no build step). `npm run web` serves it on 8770; `npm ru
 - Testing: `?autorun=60&cycle=20&rise=7` (web, add `&cam=0` for no camera) or `REST_EASY_QUERY="autorun=60&cycle=20" REST_EASY_VISIBLE=1 npm run desktop`. Read the `PERF` lines. `REST_EASY_SMOKE=1` is the hidden self-check.
 - Screen effects are one WebGL shader (`web/js/fx.js`). Do not bring back SVG filters: they ran on the CPU and caused the lag.
 - On desktop the shader canvas is hidden while sober (level < 0.08) so the real screen shows through with no capture delay.
-- Sound: no synthesis and no proprietary app sounds in the repo. AOSP sounds in `web/vendor/sounds`, OS sounds via `/system-sound/<kind>` locally, music streamed from the NCS YouTube upload (`web/js/music.js`).
+- Sound: no synthesis and no proprietary app sounds in the repo. AOSP sounds in `web/vendor/sounds`, OS sounds via `/system-sound/<kind>` locally, the NCS track in `web/vendor/music` plays through an analyser in `web/js/music.js`; its `musicState` (energy, kick, mode) drives the shader, the DOM transforms and the ads. The track is quiet for 10 s, then drops.
 - Edit with patch scripts written to a file; inline heredocs with JS quotes break in this shell.
+- `web/js/ads.js` + `web/css/ads.css` (junk pop-up ads, written by Codex): `createAds(host)` -> `tick(t, level, energy)`, `clear()`. Capped at 28 ads.
+- DevTools Chrome throttles rAF in a tab that was navigated in the background; open test runs with a new foreground page.
