@@ -51,7 +51,7 @@ function play(kind, volume = 0.55, maxMs = 4000, notification = false) {
   audio.play().catch(stop);
   return stop;
 }
-export const notify = (kind = 'system') => play(FILES[kind] ? kind : 'system', 0.75, /Call$/.test(kind) ? 6500 : 4000, true);
+export const notify = (kind = 'system') => play(FILES[kind] ? kind : 'system', 1, /Call$/.test(kind) ? 6500 : 4000, true);
 export function stopSounds() { for (const entry of active.values()) entry.stop(); }
 export const ding = () => play('bell', 0.7);
 export const hitmarker = () => play('tick', 0.5);
