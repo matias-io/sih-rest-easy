@@ -42,3 +42,7 @@ Speed is set on the setup screen (7 to 35 seconds from sober to gone) or with `?
 Brand icons in `web/vendor/icons` are from simple-icons (CC0); the brands belong to their owners and are used here as parody.
 
 Sounds in `web/vendor/sounds` are Android system sounds from the Android Open Source Project (Google), Apache License 2.0.
+
+Music in the last stretch is DEAF KEV - Invincible [NCS Release], streamed from NoCopyrightSounds' own YouTube upload. No music file is in this repo, and offline the run is silent.
+
+Timed test run: add `?autorun=60&cycle=20` on the web, or `REST_EASY_QUERY="autorun=60&cycle=20" npm run desktop`. It goes through setup, runs for 60 s closing the eyes every 20 s, and prints a `PERF` line every 5 s (fps, worst frame, tracking time, memory).

@@ -2,6 +2,7 @@ import { createEyes, keyboardEyes } from './eyes.js';
 import { createDrunk } from './drunk.js';
 import { createFx } from './fx.js';
 import { createFeed } from './feed.js';
+import { loadMusic, music, stopMusic, musicState, CREDIT } from './music.js';
 import { initAudio, ding, rest as restSound, wake, probeSystemSounds } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -133,7 +134,7 @@ async function shareScreen() {
 const fx = createFx($('fx'));
 
 async function start() {
-  initAudio();
+  initAudio(); loadMusic();
   const bg = $('bg'), live = $('liveBg'), desk = $('desk');
   bg.className = ''; live.hidden = true; desk.hidden = true; fx.clear();
   $('facecam').prepend($('camVideo'));   // the face cam rides along in the corner
@@ -141,9 +142,9 @@ async function start() {
   if (desktop) {
     // the window is excluded from capture, so a live view of the whole screen does not show itself
     try {
-      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30, width: { max: 1920 } }, audio: false });
+      const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 60 }, width: { max: 1920 } }, audio: false });
       live.srcObject = stream; live.hidden = false; await live.play();
-      fx.setSource(live);
+      fx.setSource(live, { seeThrough: true });
     } catch { /* no capture: the overlay still draws notifications and chaos over the real screen */ }
     show('stage'); await desktop.overlay(true);
     return run();
@@ -178,7 +179,7 @@ function run() {
   const RISE_S = Math.max(3, parseFloat(params.get('rise')) || parseFloat($('speed').value) || 12);
   const pace = Math.min(2, Math.max(0.6, RISE_S / 14));   // notifications keep up with the speed
   let level = pin, peak = 0, awake = 0, total = 0, rests = 0, nextToast = 1.2, last = performance.now(), t = 0, closedFor = 0;
-  let lastHud = '', lastRing = '', perfN = 0, perfAt = performance.now();
+  let lastHud = '', lastRing = '', perfN = 0, perfAt = performance.now(), worst = 0;
   let wasClosed = false, restStart = 0, levelAtClose = 0, belled = false;
   const GREET = ['nice rest', 'good morning', 'welcome back', 'rise and shine', 'power nap complete', 'eyelids: rebooted', 'that was a blink, technically'];
   const greet = (secs, recovered) => {
@@ -200,7 +201,7 @@ function run() {
     if (!running) return; running = false; stopRun = null; if (desktop) desktop.overlay(false);
     $('morning').classList.remove('on');
     removeEventListener('pointerdown', onClick); removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs);
-    restSound(false); drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
+    restSound(false); stopMusic(); $('credit').textContent = musicState.ready ? CREDIT : ''; drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
     $('liveBg').srcObject?.getTracks().forEach((x) => x.stop()); $('liveBg').srcObject = null; fx.clear(); share = null;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     $('endTime').textContent = fmt(total); $('endBac').textContent = (peak * 0.4).toFixed(2); $('endRests').textContent = rests;
@@ -230,6 +231,7 @@ function run() {
     if (ring + face !== lastRing) { lastRing = ring + face; $('hud').style.setProperty('--ring', ring); $('facecam').style.setProperty('--ring', closed ? 'var(--accent)' : ring); $('faceState').textContent = face; }
 
     drunk.render(t, level);
+    music(closed ? 0 : Math.max(0, level - 0.6) / 0.4, now);   // fades in for the last stretch, cuts when you rest
     const hudText = 'awake ' + fmt(awake) + '|BAC ' + (level * 0.4).toFixed(2);
     if (hudText !== lastHud) { lastHud = hudText; [$('hudAwake').textContent, $('hudBac').textContent] = hudText.split('|'); }
 
@@ -240,7 +242,8 @@ function run() {
       nextToast = t + (2.4 - level * 1.7 + Math.random() * 0.5) * pace;
     }
     // one line every 5 s so slowdowns are visible (npm run desktop prints it in the terminal)
-    perfN++; if (now - perfAt > 5000) { console.log(`PERF ${Math.round(perfN * 1000 / (now - perfAt))} fps · eye ${eyes.state.ms.toFixed(0)} ms · level ${level.toFixed(2)} · ${Math.round(total)} s in`); perfN = 0; perfAt = now; }
+    perfN++; worst = Math.max(worst, dt * 1000);
+    if (now - perfAt > 5000) { console.log(`PERF ${Math.round(perfN * 1000 / (now - perfAt))} fps · worst frame ${worst.toFixed(0)} ms · eye ${eyes.state.ms.toFixed(0)} ms · level ${level.toFixed(2)} · heap ${performance.memory ? Math.round(performance.memory.usedJSHeapSize / 2 ** 20) : '?'} MB · nodes ${document.getElementsByTagName('*').length} · music ${musicState.player} · ${Math.round(total)} s in`); perfN = 0; perfAt = now; worst = 0; }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
@@ -274,6 +277,14 @@ $('chatform').onsubmit = (e) => {
   const add = (who, msg) => { const p = document.createElement('p'), b = document.createElement('b'); b.textContent = who; p.append(b, msg); $('chatlog').append(p); $('chatlog').scrollTop = 1e6; };
   add('you', inp.value); inp.value = ''; setTimeout(() => add('Dave (Manager)', 'per my last message'), 900);
 };
+
+// test hook: ?autorun=60 goes through setup, runs for 60 s, ends. ?cycle=8 closes the eyes for 3 s every 8 s.
+const auto = parseFloat(params.get('autorun'));
+if (auto) setup().then(start).then(() => {
+  const cyc = parseFloat(params.get('cycle'));
+  const iv = cyc ? setInterval(() => { eyes.force(true); setTimeout(() => eyes.force(false), 3000); }, cyc * 1000) : 0;
+  setTimeout(() => { clearInterval(iv); stopRun?.(); console.log('AUTORUN done'); }, auto * 1000);
+});
 
 // desktop app extras
 if (desktop) {

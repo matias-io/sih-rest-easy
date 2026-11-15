@@ -37,14 +37,18 @@ export function createFx(canvas) {
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   const U = { t: gl.getUniformLocation(prog, 't'), lvl: gl.getUniformLocation(prog, 'lvl'), fit: gl.getUniformLocation(prog, 'fit') };
 
-  let src = null, contain = false, still = false, uploaded = false, lastTime = -1;
+  let src = null, contain = false, still = false, uploaded = false, lastTime = -1, through = false, off = false;
   const fx = {
     active: false,
     // source: a <video> (live) or an <img>/<canvas> (still). contain keeps the picture's shape.
-    setSource(el, opts = {}) { src = el; contain = !!opts.contain; still = !(el instanceof HTMLVideoElement); uploaded = false; lastTime = -1; fx.active = true; canvas.hidden = false; },
+    // seeThrough (desktop app): while sober, hide the picture so the real desktop shows with no capture delay
+    setSource(el, opts = {}) { through = !!opts.seeThrough; off = false; canvas.style.visibility = ''; src = el; contain = !!opts.contain; still = !(el instanceof HTMLVideoElement); uploaded = false; lastTime = -1; fx.active = true; canvas.hidden = false; },
     clear() { src = null; fx.active = false; canvas.hidden = true; },
     draw(t, level) {
       if (!src) return;
+      const hide = through && level < 0.08;
+      if (hide !== off) { off = hide; canvas.style.visibility = hide ? 'hidden' : ''; }
+      if (hide) return;
       // 1920 wide is plenty for a picture that is being smeared anyway, and keeps 4K screens cheap
       const scale = Math.min(1, 1920 / (canvas.clientWidth * devicePixelRatio)) * devicePixelRatio;
       const w = Math.round(canvas.clientWidth * scale), h = Math.round(canvas.clientHeight * scale);
