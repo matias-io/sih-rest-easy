@@ -18,10 +18,15 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 .mini { background:#1b2030; color:var(--ink); border:1px solid #2c3347; border-radius:999px; padding:3px 12px; font-size:13px; margin-left:8px; }
 
 .logo { display:flex; gap:22px; }
-.eye { width:86px; height:86px; background:#fff; border-radius:50%; display:grid; place-items:center; animation:blink 3.2s infinite; transform-origin:center; }
-.eye i { width:34px; height:34px; background:#0b0d12; border-radius:50%; animation:look 5s ease-in-out infinite; }
+.eye { width:86px; height:86px; background:#fff; border-radius:50%; display:grid; place-items:center; animation:blink 3.2s infinite; transform-origin:center; overflow:hidden; }
+.eye i { width:34px; height:34px; background:#0b0d12; border-radius:50%; transition:transform 80ms ease-out; }
 @keyframes blink { 0%,44%,50%,92%,100% { transform:scaleY(1); } 47%,96% { transform:scaleY(.06); } }
-@keyframes look { 0%,100% { transform:translate(0,0); } 30% { transform:translate(14px,4px); } 60% { transform:translate(-12px,-3px); } }
+.setup-heading { display:flex; align-items:center; justify-content:center; gap:18px; }
+.setup-heading .logo { gap:9px; flex:none; }
+.setup-heading .eye { width:42px; height:42px; animation:none; transition:transform 65ms ease-out; }
+.setup-heading .eye i { width:17px; height:17px; }
+.setup-heading .logo.is-closed .eye { transform:scaleY(.06); }
+@media (prefers-reduced-motion:reduce) { .eye { animation:none; } .eye i,.setup-heading .eye { transition:none; } }
 
 .setup-grid { display:grid; grid-template-columns:minmax(0,460px) 300px; gap:28px; align-items:center; text-align:left; }
 .checks { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
@@ -154,3 +159,17 @@ body.desktop .screen { background:var(--bg); }
 .toast.call .rounds { display:flex; justify-content:center; gap:14px; }
 .toast.call .rounds i { width:38px; height:38px; border-radius:50%; display:grid; place-items:center; font-style:normal; font-size:17px; color:#fff; background:#5b5fc7; }
 .toast.call .rounds .end { background:#c4314b; transform:rotate(135deg); }
+
+/* Discord toasts share the OS layout with Discord's dark palette. */
+.toast.discord { background:#313338; border-color:#5865f280; }
+.toast.discord .ti img { filter:brightness(0) invert(1); }
+.toast.discord .app { color:#b5bac1; }
+.toast.discord .who { color:#f2f3f5; }
+.toast.discord .msg { color:#dbdee1; }
+.toast.discord.call { background:radial-gradient(ellipse at top,#4752a0,#232428); }
+.toast.discord.call .rounds .vid,.toast.discord.call .rounds .aud { background:#248046; }
+.call-brand { display:flex; align-items:center; justify-content:center; gap:7px; font-size:11px; color:#ddd; margin-bottom:10px; }
+.call-brand .ti { width:20px; height:20px; }
+.ad-ram .ad-card { background:#101010; color:#7fff00; border-color:#7fff00; }
+.ad-cookie .ad-card { background:#fff3d0; border-color:#76532a; }
+.ad-update .ad-card { background:#0078d4; color:white; border-color:white; }

@@ -1,7 +1,7 @@
 // Turns one number (level, 0 sober to 1 gone) into what the screen looks like.
 import { hitmarker, airhorn } from './audio.js';
 
-const POPS = ['WOW', '360', 'MLG', 'SAMPLE TEXT', '+100', 'OHHHH', 'NO SLEEP', 'GET REKT', 'BLINK = NOOB', '420 FPS'];
+const POPS = ['WOW', '360', 'MLG', 'SAMPLE TEXT', '+100', 'OHHHH', 'NO SLEEP', 'GET REKT', 'BLINK = NOOB', '404 SLEEP'];
 
 export function createDrunk({ world, fx, mlg, toasts }) {
   const rainbow = document.createElement('div'); rainbow.className = 'rainbow'; mlg.appendChild(rainbow);
@@ -20,7 +20,7 @@ export function createDrunk({ world, fx, mlg, toasts }) {
     else { spawn('shades', {}, 3000); airhorn(); shake = 1; }
   }
 
-  const SAM = ['hey. need $7 trillion by EOD', 'you up?', 'close your eyes. I am scaling.', 'are you AGI yet', 'this meeting could have been a GPU'];
+  const SAM = ['hey. need $7 trillion by EOD', 'your free trial of blinking has expired', 'close your eyes. I am scaling.', 'are you AGI yet', 'this meeting could have been a GPU'];
   function sam() {
     const el = spawn('sam', { left: rnd(4, 62) + '%', '--r': rnd(-14, 14) + 'deg' }, 2700);
     el.style.setProperty('--r', rnd(-14, 14) + 'deg');

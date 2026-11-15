@@ -4,12 +4,14 @@ import { createFx } from './fx.js';
 import { createFeed } from './feed.js';
 import { loadMusic, startMusic, music, stopMusic, musicState, CREDIT } from './music.js';
 import { createAds } from './ads.js';
-import { initAudio, ding, rest as restSound, wake, probeSystemSounds } from './audio.js';
+import { createMascotEyes } from './mascot.js';
+import { initAudio, ding, rest as restSound, wake, probeSystemSounds, stopSounds } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
 const FALL_S = 2.6;   // seconds of closed eyes to fully sober
-const show = (id) => { for (const s of ['intro', 'setup', 'stage', 'end']) $(s).hidden = s !== id; };
+const mascot = createMascotEyes();
+const show = (id) => { for (const s of ['intro', 'setup', 'stage', 'end']) $(s).hidden = s !== id; mascot.blink(false); mascot.refresh(); };
 const fmt = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 
 let eyes = keyboardEyes(), share = null, running = false, stopRun = null;
@@ -27,7 +29,7 @@ function check(key, cls, text) {
 }
 
 async function setup() {
-  show('setup'); loadMusic();
+  show('setup'); loadMusic(); initAudio();
   const brand = navigator.userAgentData?.brands?.find((b) => !/Not/.test(b.brand))?.brand || (/(Firefox|Safari|Chrome)/.exec(navigator.userAgent) || ['browser'])[0];
   check('browser', document.fullscreenEnabled ? 'ok' : 'bad', `${brand} on ${navigator.userAgentData?.platform || navigator.platform}`);
   check('display', 'ok', `${screen.width}×${screen.height} at ${devicePixelRatio}x`);
@@ -36,7 +38,7 @@ async function setup() {
   else if (!navigator.mediaDevices?.getDisplayMedia) check('screen', '', 'not supported here, using the built-in desktop');
 
   hardware();
-  probeSystemSounds().then((ok) => { const li = document.querySelector('#checks [data-k="sound"]'); li.className = 'ok'; li.querySelector('span').textContent = ok ? 'the notification sounds of this computer + official Android sounds' : 'official Android system sounds (Google, Apache 2.0)'; });
+  probeSystemSounds().then((ok) => { const li = document.querySelector('#checks [data-k="sound"]'); li.className = 'ok'; li.querySelector('span').textContent = ok ? 'Teams, Slack and Discord recordings + local system sounds' : 'Teams, Slack and Discord recordings + Windows system sounds'; });
   check('camera', 'wait'); check('tracker', 'wait');
   $('start').disabled = false; watchEyes();   // keyboard mode works right away; the camera upgrades it
   const video = $('camVideo');
@@ -63,6 +65,7 @@ function watchEyes() {
   const tick = () => {
     if (running || $('setup').hidden) { watching = false; return; }
     const s = eyes.state;
+    mascot.blink(s.closed);
     $('eyeState').textContent = s.closed ? 'closed' : s.face ? 'open' : 'no face';
     $('eyeState').classList.toggle('closed', s.closed);
     $('eyeMeter').style.width = Math.round(s.score * 100) + '%';
@@ -204,7 +207,7 @@ function run() {
     if (!running) return; running = false; stopRun = null; if (desktop) desktop.overlay(false);
     $('morning').classList.remove('on');
     removeEventListener('pointerdown', onClick); removeEventListener('keydown', onKey); document.removeEventListener('fullscreenchange', onFs);
-    restSound(false); stopMusic(); ads.clear(); $('credit').textContent = CREDIT; drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
+    restSound(false); stopMusic(); stopSounds(); ads.clear(); $('credit').textContent = CREDIT; drunk.reset(); feed.clear(); $('mlg').innerHTML = ''; $('rest').classList.remove('on');
     $('liveBg').srcObject?.getTracks().forEach((x) => x.stop()); $('liveBg').srcObject = null; fx.clear(); share = null;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     $('endTime').textContent = fmt(total); $('endBac').textContent = (peak * 0.4).toFixed(2); $('endRests').textContent = rests;

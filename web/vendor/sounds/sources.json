@@ -1,0 +1,57 @@
+[
+  {
+    "file": "slack-message.mp3",
+    "source": "https://a.slack-edge.com/58f5096/sounds/push/knock_brush.mp3",
+    "sha256": "0ef71f3050a07d58395aa6f7391d3e07be5f0f8ffafc5b31d91ee7bef7558138"
+  },
+  {
+    "file": "discord-message.mp3",
+    "source": "https://canary.discord.com/assets/70ae9d5bc54e4e0954f9.mp3",
+    "sha256": "31ad0482eee7770597b8aa723a80fd041ade0b076679b12293664f1f1777211b"
+  },
+  {
+    "file": "discord-call.mp3",
+    "source": "https://canary.discord.com/assets/986703daecf955ce3ce3.mp3",
+    "sha256": "a2365a04f839099538271d06889147475ceef0845f8cc010425618f5dc412880"
+  },
+  {
+    "file": "discord-join.mp3",
+    "source": "https://canary.discord.com/assets/93034ac8d9eba50e3354.mp3",
+    "sha256": "d30746caf3e4675ae0d822d51461a9ad24832afa1e20179c3c2fc7b50b911a26"
+  },
+  {
+    "file": "discord-leave.mp3",
+    "source": "https://canary.discord.com/assets/fea7a918aecf33a04116.mp3",
+    "sha256": "9fd71c2d8112c82a7fb316602bb1645bc65f5edfa260110bbaae80090fbe9df0"
+  },
+  {
+    "file": "teams-call.mp3",
+    "source": "C:\\Program Files\\WindowsApps\\MSTeams_26288.2004.5269.3420_x64__8wekyb3d8bbwe\\Audio\\ring.mp3",
+    "sha256": "126e32a99d81285fe4e143265dcec123d34f3e767fa3fbfd2f18d273f064b9bd"
+  },
+  {
+    "file": "teams-message.mp3",
+    "source": "C:\\Program Files\\WindowsApps\\MSTeams_26288.2004.5269.3420_x64__8wekyb3d8bbwe\\Audio\\teams_notification.mp3",
+    "sha256": "10b58f7ae43bd7c0a615a0a93044cfa59a0a10232d4ab959837a2dee0365f4a9"
+  },
+  {
+    "file": "windows-email.wav",
+    "source": "C:\\Windows\\Media\\Windows Notify Email.wav",
+    "sha256": "13f659206c964082b7870608892d45ca6767eea1d68baf579df9eda0c9a20e24"
+  },
+  {
+    "file": "windows-calendar.wav",
+    "source": "C:\\Windows\\Media\\Windows Notify Calendar.wav",
+    "sha256": "220bd8b589df6fb4e192bb66e5a2ae25789019910775e3fea544fca2451959b2"
+  },
+  {
+    "file": "windows-system.wav",
+    "source": "C:\\Windows\\Media\\Windows Notify System Generic.wav",
+    "sha256": "2fe09e9aaa34ff473dc40fe7b62f277e395a787da0e76e0d6f94d3bd31fc6540"
+  },
+  {
+    "file": "windows-critical.wav",
+    "source": "C:\\Windows\\Media\\Windows Exclamation.wav",
+    "sha256": "c362d950204cc8327016209a3246216efed7167cd92e02f754b963f49f793707"
+  }
+]

@@ -45,9 +45,9 @@
 .ad-download .ad-cta { background: #20b900; border-color: #b7ff7f; }
 .ad-download .ad-fake { background: #0059ff; border-color: #c4e8ff; }
 .ad-download .ad-fake + .ad-fake { background: #ff8500; border-color: #ffed9e; }
-.ad-singles .ad-card { background: #ffb9d4; border-color: #ec0064; }
-.ad-singles .ad-title, .ad-singles .ad-cta { background: #ec0064; }
-.ad-singles .ad-product { animation: ad-throb 900ms ease-in-out infinite alternate; }
+.ad-meeting .ad-card { background: #ffb9d4; border-color: #ec0064; }
+.ad-meeting .ad-title, .ad-meeting .ad-cta { background: #ec0064; }
+.ad-meeting .ad-product { animation: ad-throb 900ms ease-in-out infinite alternate; }
 .ad-doctor .ad-card { background: #efffff; border-color: #0066b4; }
 .ad-doctor .ad-title { background: #0066b4; }
 .ad-doctor h2 { color: #d80000; }

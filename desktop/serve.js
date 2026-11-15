@@ -1,7 +1,7 @@
 // Tiny static server for the shared web app. Used by `npm run web` and by the desktop app.
 const http = require('node:http'), fs = require('node:fs'), path = require('node:path');
 const ROOT = path.join(__dirname, '..', 'web');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.svg': 'image/svg+xml', '.ogg': 'audio/ogg', '.mp3': 'audio/mpeg', '.jpg': 'image/jpeg', '.task': 'application/octet-stream' };
+const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.wasm': 'application/wasm', '.svg': 'image/svg+xml', '.ogg': 'audio/ogg', '.wav': 'audio/wav', '.mp3': 'audio/mpeg', '.jpg': 'image/jpeg', '.task': 'application/octet-stream' };
 
 // The operating system's own notification sounds, served from where the OS keeps them.
 const SOUND_DIR = process.platform === 'win32' ? path.join(process.env.WINDIR || 'C:\\Windows', 'Media') : '/System/Library/Sounds';
