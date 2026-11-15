@@ -17,14 +17,17 @@ void main(){
     // A bounded ghost image over the real desktop: no flips, mirrors or torn
     // coordinates that would make the visible controls disagree with clicks.
     float strength = smoothstep(0.08, 1.0, lvl);
-    float pulse = 0.7 + 0.2 * en + 0.1 * k;
-    vec2 drift = vec2(sin(t * 0.8), cos(t * 0.65)) * strength * pulse * 0.003;
+    float pulse = 0.7 + 0.2 * en + 0.6 * k;
+    vec2 drift = vec2(sin(t * 0.8), cos(t * 0.65)) * strength * pulse * (0.003 + 0.009 * strength);
     vec2 q = uv + drift;
-    float r = strength * (0.001 + 0.002 * pulse);
+    float r = strength * (0.001 + 0.006 * strength * pulse);
     vec3 blurred = (samp(q) * 2.0 + samp(q + vec2(r, r)) + samp(q - vec2(r, r))
       + samp(q + vec2(r, -r)) + samp(q + vec2(-r, r))) / 6.0;
-    vec3 ghost = samp(q + vec2(0.006, 0.002) * strength * pulse);
-    gl_FragColor = vec4(mix(blurred, ghost, strength * 0.25), 1.0);
+    vec3 ghost = samp(q + vec2(0.006 + 0.02 * strength, 0.002 + 0.006 * sin(t * 0.9)) * strength * pulse);
+    vec3 c = mix(blurred, ghost, strength * 0.45);
+    float l = dot(c, vec3(0.299, 0.587, 0.114));
+    c = hue(mix(vec3(l), c, 1.0 + strength * 0.8));
+    gl_FragColor = vec4(c, 1.0);
     return;
   }
   vec2 q = uv;
@@ -100,9 +103,10 @@ export function createFx(canvas) {
     clear() { stopFrames(); src = null; fx.active = false; canvas.hidden = true; canvas.style.opacity = ''; },
     draw(t, level, m = { energy: 1, kick: 0, mode: 0, seed: 0 }) {
       if (!src) return;
-      // At least 72% of the live desktop remains visible even at maximum BAC.
-      // BAC sets the floor; music gently modulates the blur layer above it.
-      canvas.style.opacity = through ? (Math.max(0, Math.min(1, (level - 0.08) / 0.92)) * (0.20 + 0.06 * Math.max(0, Math.min(1, m.energy)) + 0.02 * Math.max(0, Math.min(1, m.kick)))).toFixed(3) : '1';
+      // Desktop: the blurred, ghosted copy thickens with BAC (about 25% at 0.10, 60-75% at 0.40)
+      // and the music pumps it, so the real screen is barely readable at the top.
+      const s = Math.max(0, Math.min(1, (level - 0.08) / 0.92));
+      canvas.style.opacity = through ? (s * (0.2 + 0.4 * s + 0.08 * Math.max(0, Math.min(1, m.energy)) + 0.07 * Math.max(0, Math.min(1, m.kick)))).toFixed(3) : '1';
       const hide = through && level < 0.08;
       if (hide !== off) { off = hide; canvas.style.visibility = hide ? 'hidden' : ''; }
       if (hide) return;

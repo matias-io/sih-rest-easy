@@ -1,12 +1,15 @@
 // Turns one number (level, 0 sober to 1 gone) into what the screen looks like.
 import { hitmarker } from './audio.js';
 import { createClub } from './club.js';
+import { createHaze } from './haze.js';
 
 const POPS = ['WOW', '360', 'MLG', 'SAMPLE TEXT', '+100', 'OHHHH', 'NO SLEEP', 'GET REKT', 'BLINK = NOOB', '404 SLEEP'];
 
-export function createDrunk({ world, fx, mlg, toasts }) {
+export function createDrunk({ world, fx, mlg, toasts, ads = null }) {
   const desktop = !!window.restEasyDesktop;
   const club = createClub(mlg.parentElement);
+  const haze = createHaze(mlg.parentElement);
+  let lastDeco = '';
   const rainbow = document.createElement('div'); rainbow.className = 'rainbow'; mlg.appendChild(rainbow);
   const darioPhoto = new Image();
   darioPhoto.src = new URL('../vendor/img/dario.jpg', import.meta.url).href;
@@ -55,6 +58,12 @@ export function createDrunk({ world, fx, mlg, toasts }) {
   // t in seconds, level 0..1, m = the music (energy, kick, mode, seed)
   function render(t, level, m = { energy: 1, kick: 0, mode: 0, seed: 0 }) {
     club.render(t, level, m);
+    haze.render(t, level, m);
+    if (desktop) {
+      // Jokes and junk ads grow from faint to nearly solid over the real desktop as BAC climbs.
+      const deco = (0.25 + 0.65 * Math.max(0, Math.min(1, (level - 0.15) / 0.85))).toFixed(2);
+      if (deco !== lastDeco) { lastDeco = deco; mlg.style.opacity = deco; if (ads) ads.style.opacity = deco; }
+    }
     const amp = 0.3 + 0.7 * m.energy;                  // quiet music, calm screen
     const sway = Math.max(0, level - 0.08) * amp;      // nothing at all for the first few seconds
     const deep = Math.max(0, level - 0.4) / 0.6 * amp; // 0..1 over the second half
@@ -87,11 +96,11 @@ export function createDrunk({ world, fx, mlg, toasts }) {
       if (filter !== lastFilter) world.style.filter = lastFilter = filter;
     }
 
-    const opacity = (mlgAmt * (desktop ? 0.04 : 0.35)).toFixed(2);
+    const opacity = (mlgAmt * (desktop ? 0.18 : 0.35)).toFixed(2);
     if (opacity !== lastOpacity) rainbow.style.opacity = lastOpacity = opacity;
-    if (mlgAmt > 0 && (t > nextGag || (!desktop && m.beat && Math.random() < 0.5))) { gag(); nextGag = t + (desktop ? rnd(4, 7) : rnd(0.25, 1.1 - mlgAmt * 0.6)); }
+    if (mlgAmt > 0 && (t > nextGag || (m.beat && Math.random() < (desktop ? 0.25 : 0.5)))) { gag(); nextGag = t + (desktop ? rnd(1, 3.2 - mlgAmt * 1.5) : rnd(0.25, 1.1 - mlgAmt * 0.6)); }
   }
 
-  function reset() { club.clear(); for (const el of effects.keys()) removeEffect(el); toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
+  function reset() { club.clear(); haze.clear(); mlg.style.opacity = ''; if (ads) ads.style.opacity = ''; lastDeco = ''; for (const el of effects.keys()) removeEffect(el); toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
   return { render, reset, hit, sam, dario };
 }
