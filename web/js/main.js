@@ -275,6 +275,11 @@ function run() {
       level = Math.min(1, level + dt / RISE_S * (level < 0.12 ? 0.4 : 1.7)); awake += dt;
     }
     peak = Math.max(peak, level);
+    if (closed && !$('rest').classList.contains('on')) {
+      // Each rest shows one of the CEOs at random.
+      const pic = $('rest').querySelector('.rest-pic'), who = Math.random() < 0.5 ? ['feed/matias-gym.jpg', 'Elon Musk gym meme'] : ['zuck.jpg', 'Mark Zuckerberg'];
+      pic.src = 'vendor/img/' + who[0]; pic.alt = who[1];
+    }
     $('rest').classList.toggle('on', closed);
     restSound(closed && level > 0);
     const ring = level < 0.3 ? 'var(--ok)' : level < 0.7 ? '#ffd166' : 'var(--bad)';
@@ -287,7 +292,7 @@ function run() {
     ads.tick(t, level, m.energy);
     if (!closed && level > 0.3 && t > cameoAt) {
       drunk[nextCameo]();
-      nextCameo = nextCameo === 'dario' ? 'sam' : 'dario';
+      nextCameo = { dario: 'sam', sam: 'zuck', zuck: 'dario' }[nextCameo];
       cameoAt = t + 16 + Math.random() * 16;
     }
     const hudText = 'awake ' + fmt(awake) + '|BAC ' + (level * 0.4).toFixed(2);

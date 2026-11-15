@@ -47,6 +47,15 @@ export function createDrunk({ world, fx, mlg, toasts, ads = null }) {
     el.append(img, cap); shake = 1;
   }
 
+  const ZUCK = ['blinking is not supported in this version of the metaverse', 'I am also a real human. like you.', 'your eyes are open. we have noticed.', 'move fast and never blink'];
+  function zuck() {
+    const el = spawn('sam', { left: rnd(4, 62) + '%' }, 2700);
+    el.style.setProperty('--r', rnd(-14, 14) + 'deg');
+    const img = new Image(); img.src = new URL('../vendor/img/zuck.jpg', import.meta.url).href; img.alt = 'Mark Zuckerberg';
+    const cap = document.createElement('b'); cap.textContent = ZUCK[Math.floor(Math.random() * ZUCK.length)];
+    el.append(img, cap); shake = 1;
+  }
+
   const DARIO = ['Claude has entered the meeting.', 'Your context window has a visitor.', 'The printer is now an agent.'];
   function dario() {
     const el = spawn('dario' + (Math.random() < 0.5 ? ' from-left' : ''), {}, 3800);
@@ -102,5 +111,5 @@ export function createDrunk({ world, fx, mlg, toasts, ads = null }) {
   }
 
   function reset() { club.clear(); haze.clear(); mlg.style.opacity = ''; if (ads) ads.style.opacity = ''; toasts.style.opacity = ''; lastDeco = ''; for (const el of effects.keys()) removeEffect(el); toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
-  return { render, reset, hit, sam, dario };
+  return { render, reset, hit, sam, dario, zuck };
 }
