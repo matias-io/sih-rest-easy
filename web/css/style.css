@@ -170,10 +170,6 @@ body.desktop #toasts { opacity:1; }
 .haze-tint { inset:0; opacity:0; }
 .haze-blob { left:0; top:0; width:55vmax; height:55vmax; margin:-27.5vmax 0 0 -27.5vmax; border-radius:50%; background:radial-gradient(circle, color-mix(in srgb, var(--c) 70%, transparent) 0, color-mix(in srgb, var(--c) 30%, transparent) 35%, transparent 70%); opacity:0; }
 .haze-bar { left:-10vw; top:0; width:120vw; height:6vh; transform-origin:50% 0; opacity:0; mix-blend-mode:normal; }
-.haze-tunnel { left:50%; top:50%; width:300vmax; height:300vmax; margin:-150vmax 0 0 -150vmax; background:radial-gradient(closest-side, transparent 0, transparent 20%, #000a 30%, #000e 45%, #000 60%); opacity:0; }
-.haze-lid { left:-5vw; width:110vw; height:60vh; }
-.haze-lid-top { top:-60vh; background:linear-gradient(to top, transparent, #050308f2 30%, #050308); }
-.haze-lid-bottom { bottom:-60vh; background:linear-gradient(to bottom, transparent, #050308f2 30%, #050308); }
 body.desktop #rest { background:transparent; }
 
 /* Club lighting lives around the workspace; the center and controls stay usable. */
