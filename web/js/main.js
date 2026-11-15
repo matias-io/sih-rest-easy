@@ -80,7 +80,8 @@ async function shareScreen() {
     const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 30 }, audio: false, controller, selfBrowserSurface: 'exclude', monitorTypeSurfaces: 'include' });
     const track = stream.getVideoTracks()[0], surface = track.getSettings().displaySurface || 'monitor';
     try { if (surface !== 'monitor') controller?.setFocusBehavior?.('no-focus-change'); } catch {}
-    const video = document.createElement('video'); video.muted = true; video.srcObject = stream; await video.play();
+    // do not wait for the first frame: a background tab sends none until it is shown
+    const video = document.createElement('video'); video.muted = true; video.srcObject = stream; video.play().catch(() => {});
     share = { stream, surface, video, controller };
     track.onended = () => { if (!running) { share = null; check('screen', '', 'optional'); } };
     check('screen', 'ok', surface === 'monitor' ? 'whole screen: your real desktop gets drunk' : surface === 'browser' ? 'a tab, live (you can scroll it)' : 'a window, live');
@@ -107,7 +108,7 @@ async function start() {
     show('stage'); await desktop.overlay(true);
     return run();
   }
-  if (share?.surface === 'monitor') {
+  if (share?.surface === 'monitor' && share.video.videoWidth) {
     // show the built-in desktop in the page for a moment so the frame we take has "work" in it,
     // under your real tab strip and above your real taskbar
     bg.className = 'wall'; desk.hidden = false; show('stage');
@@ -118,7 +119,8 @@ async function start() {
     share.stream.getTracks().forEach((t) => t.stop()); share = null;
     bg.className = ghost.className = ''; bg.style.backgroundImage = ghost.style.backgroundImage = `url(${url})`; desk.hidden = true;
   } else if (share) {
-    live.srcObject = share.stream; live.hidden = false; live.play();
+    live.srcObject = share.stream; live.hidden = false; live.classList.remove('fill'); live.play().catch(() => {});
+    const twin = document.createElement('video'); twin.muted = true; twin.srcObject = share.stream; twin.className = 'contain'; twin.play().catch(() => {}); ghost.append(twin);   // double vision
     try { await share.controller?.forwardWheel?.(live); } catch {}   // Chrome: scroll the shared tab from here
     show('stage');
   } else {

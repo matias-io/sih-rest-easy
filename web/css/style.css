@@ -62,18 +62,23 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 .tb-app { width:30px; height:30px; border-radius:7px; background:#2a3147; position:relative; } .tb-app.on::after { content:""; position:absolute; left:9px; right:9px; bottom:-5px; height:3px; border-radius:2px; background:#7c9cff; }
 .clock { margin-left:auto; font-size:13px; color:#cfd6e6; }
 
-/* ---------- notifications ---------- */
-#toasts { position:absolute; right:18px; bottom:62px; width:min(380px, 90vw); display:flex; flex-direction:column; gap:10px; pointer-events:none; }
-.toast { pointer-events:auto; display:grid; grid-template-columns:40px 1fr; gap:12px; background:#1f2330f2; color:#fff; border:1px solid #ffffff1a; border-radius:12px; padding:12px 14px; box-shadow:0 12px 34px #000a; animation:toastIn .35s cubic-bezier(.2,1.3,.4,1) both; cursor:pointer; }
-.toast.out { animation:toastOut .3s ease forwards; }
-@keyframes toastIn { from { transform:translateX(110%); opacity:0; } }
+/* ---------- notifications: Windows 11 toast look ---------- */
+#toasts { position:absolute; right:16px; bottom:60px; width:min(364px, 92vw); display:flex; flex-direction:column; gap:8px; pointer-events:none; z-index:2; }
+.toast { pointer-events:auto; background:#2c2c2cf5; color:#fff; border:1px solid #ffffff14; border-radius:8px; padding:12px 16px 14px; box-shadow:0 8px 28px #0009; font-family:"Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; animation:toastIn .3s cubic-bezier(.1,.9,.2,1) both; cursor:default; }
+.toast.out { animation:toastOut .25s ease forwards; }
+@keyframes toastIn { from { transform:translateX(110%); } }
 @keyframes toastOut { to { transform:translateX(110%); opacity:0; } }
-.toast .ico { width:40px; height:40px; border-radius:9px; display:grid; place-items:center; font-weight:800; font-size:18px; color:#fff; }
-.toast .app { font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:#aab3c7; display:flex; justify-content:space-between; }
-.toast .who { font-weight:700; font-size:14px; margin-top:1px; }
-.toast .msg { font-size:14px; color:#dfe4ee; line-height:1.35; margin-top:2px; }
-.toast.dank { font-family:"Comic Sans MS", "Chalkboard SE", cursive; background:#0d0; color:#000; border:3px solid #f0f; animation:toastIn .35s both, hue 1.2s linear infinite; }
-.toast.dank .msg, .toast.dank .app { color:#000; }
+.toast .th { display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+.toast .ti { width:16px; height:16px; border-radius:3px; display:inline-grid; place-items:center; font-weight:800; line-height:1; flex:none; }
+.toast .app { font-size:12px; color:#ffffffc9; flex:1; }
+.toast .x { font-size:11px; color:#ffffff99; }
+.toast .who { font-weight:600; font-size:14px; }
+.toast .msg { font-size:14px; color:#ffffffc9; line-height:1.35; margin-top:2px; }
+.toast .acts { display:flex; gap:8px; margin-top:12px; }
+.toast .acts button { flex:1; background:#ffffff14; color:#fff; border:1px solid #ffffff1a; border-radius:4px; padding:6px 0; font-size:13px; }
+.toast .acts .go { background:#107c10; border-color:#107c10; } .toast .acts .no { background:#c42b1c; border-color:#c42b1c; }
+.toast.dank { font-family:"Comic Sans MS", "Chalkboard SE", cursive; background:#0d0; color:#000; border:3px solid #f0f; animation:toastIn .3s both, hue 1.2s linear infinite; }
+.toast.dank .msg, .toast.dank .app, .toast.dank .x { color:#000; }
 @keyframes hue { to { filter:hue-rotate(360deg); } }
 
 /* ---------- hud, rest, mlg ---------- */
@@ -112,3 +117,4 @@ body.desktop, body.desktop #stage { background:transparent; }
 body.desktop .screen { background:var(--bg); }
 #liveBg.fill, #ghost video.fill { object-fit:fill; width:100%; height:100%; position:absolute; inset:0; }
 body.desktop #hud::after { content:"Ctrl+Shift+X stops"; color:#8b93a3; }
+#ghost video.contain { object-fit:contain; width:100%; height:100%; position:absolute; inset:0; }
