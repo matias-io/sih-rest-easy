@@ -62,7 +62,7 @@ export function createDrunk({ world, fx, mlg, toasts, ads = null }) {
     if (desktop) {
       // Jokes and junk ads grow from faint to nearly solid over the real desktop as BAC climbs.
       const deco = (0.25 + 0.65 * Math.max(0, Math.min(1, (level - 0.15) / 0.85))).toFixed(2);
-      if (deco !== lastDeco) { lastDeco = deco; mlg.style.opacity = deco; if (ads) ads.style.opacity = deco; }
+      if (deco !== lastDeco) { lastDeco = deco; if (ads) ads.style.opacity = deco; }
     }
     const amp = 0.3 + 0.7 * m.energy;                  // quiet music, calm screen
     const sway = Math.max(0, level - 0.08) * amp;      // nothing at all for the first few seconds
