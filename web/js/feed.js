@@ -82,11 +82,20 @@ export function createFeed(box, chatlog) {
     const list = FEED[tier], [app, who, msg, buttons] = list[used[tier]++ % list.length];
     const [name, mark, kind] = APPS[app];
     const el = document.createElement('div');
-    el.className = 'toast' + (tier === 3 ? ' dank' : '');
-    el.innerHTML = `<div class="th">${mark}<span class="app"></span><span class="x">✕</span></div><div class="row">${kind ? avatar(who) : ''}<div><div class="who"></div><div class="msg"></div></div></div>`;
-    el.querySelector('.app').textContent = name; el.querySelector('.who').textContent = who; el.querySelector('.msg').textContent = msg;
-    if (kind === 'teams' && !buttons) { const r = document.createElement('div'); r.className = 'reply'; r.innerHTML = '<span>Send a quick reply</span><span>➤</span>'; el.append(r); }
-    if (buttons) { const row = document.createElement('div'); row.className = 'acts'; for (const b of buttons) { const btn = document.createElement('button'); btn.textContent = b; btn.className = /Accept|Join/.test(b) ? 'go' : /Decline/.test(b) ? 'no' : ''; row.append(btn); } el.append(row); }
+    const call = kind === 'teams' && buttons?.includes('Accept');
+    el.className = 'toast' + (tier === 3 ? ' dank' : '') + (call ? ' call' : kind === 'teams' ? ' teams' : '');
+    if (call) {
+      // the real Teams call toast: name, "is calling you", avatar, round video / audio / hang-up buttons
+      const caller = who.replace(/ is calling.*$/, '');
+      el.innerHTML = `<span class="x">✕</span><div class="who"></div><div class="msg">is calling you</div>${avatar(caller)}<div class="rounds"><i class="vid"><svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/></svg></i><i class="aud"><svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg></i><i class="end"><svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg></i></div>`;
+      el.querySelector('.who').textContent = caller;
+    } else {
+      el.innerHTML = `<div class="th">${mark}<span class="app"></span><span class="x">✕</span></div><div class="row">${kind ? avatar(who) : ''}<div><div class="who"></div><div class="msg"></div></div></div>`;
+      el.querySelector('.app').textContent = name; el.querySelector('.who').textContent = who; el.querySelector('.msg').textContent = msg;
+      // the real Teams chat banner ends in a Reply row
+      if (kind === 'teams' && !buttons) { const r = document.createElement('div'); r.className = 'reply'; r.innerHTML = '<span>↩&nbsp; Reply</span>'; el.append(r); }
+      if (buttons) { const row = document.createElement('div'); row.className = 'acts'; for (const b of buttons) { const btn = document.createElement('button'); btn.textContent = b; btn.className = /Accept|Join/.test(b) ? 'go' : /Decline/.test(b) ? 'no' : ''; row.append(btn); } el.append(row); }
+    }
     const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 300); };
     el.onclick = close; setTimeout(close, 7000);
     box.appendChild(el);

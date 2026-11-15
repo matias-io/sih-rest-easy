@@ -1,0 +1,9 @@
+{
+  // Deploys to the Cloudflare account that owns matiass.ca.
+  // Run: XDG_CONFIG_HOME=~/.wrangler-matiass npx wrangler deploy -c wrangler.matiass.jsonc
+  "name": "sih-rest-easy",
+  "compatibility_date": "2026-11-01",
+  "assets": { "directory": "./web" },
+  "workers_dev": true,
+  "routes": [{ "pattern": "sih.matiass.ca", "custom_domain": true }]
+}
