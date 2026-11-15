@@ -12,6 +12,8 @@ const FILES = {
 const SYSTEM_KINDS = ['message', 'email', 'calendar', 'system', 'critical'];
 const bank = {};
 const active = new Map();
+// Only app/OS notifications duck the soundtrack; UI effects keep their own mix.
+export const notificationAudio = { active: 0 };
 let ready = false;
 export function initAudio() {
   if (ready) return;
@@ -28,7 +30,7 @@ export async function probeSystemSounds() {
     return true;
   } catch { return false; }
 }
-function play(kind, volume = 0.55, maxMs = 4000) {
+function play(kind, volume = 0.55, maxMs = 4000, notification = false) {
   initAudio();
   const source = bank[kind];
   if (!source) return () => {};
@@ -37,15 +39,19 @@ function play(kind, volume = 0.55, maxMs = 4000) {
   while (active.size >= 8) active.values().next().value.stop();
   const audio = source.cloneNode();
   let timer;
-  const stop = () => { clearTimeout(timer); audio.pause(); active.delete(audio); };
+  const stop = () => {
+    clearTimeout(timer); audio.pause();
+    if (active.delete(audio) && notification) notificationAudio.active--;
+  };
   active.set(audio, { kind, stop });
+  if (notification) notificationAudio.active++;
   audio.volume = volume;
   audio.onended = stop; audio.onerror = stop;
   timer = setTimeout(stop, maxMs);
   audio.play().catch(stop);
   return stop;
 }
-export const notify = (kind = 'system') => play(FILES[kind] ? kind : 'system', 0.55, /Call$/.test(kind) ? 6500 : 4000);
+export const notify = (kind = 'system') => play(FILES[kind] ? kind : 'system', 0.75, /Call$/.test(kind) ? 6500 : 4000, true);
 export function stopSounds() { for (const entry of active.values()) entry.stop(); }
 export const ding = () => play('bell', 0.7);
 export const hitmarker = () => play('tick', 0.5);

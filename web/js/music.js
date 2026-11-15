@@ -1,4 +1,5 @@
 // The soundtrack, and the pulse everything else moves to.
+import { notificationAudio } from './audio.js';
 // DEAF KEV - Invincible [NCS Release], from NoCopyrightSounds. The track opens quiet for about
 // ten seconds and then drops, which is the shape of a run: usable, then not.
 // The audio goes through an analyser, so the visuals follow what is actually playing.
@@ -42,7 +43,10 @@ export function music(level, closed, t, dt) {
     an.getByteFrequencyData(buf);
     let b = 0, a = 0; for (let i = 1; i < 8; i++) b += buf[i]; for (let i = 0; i < 200; i++) a += buf[i];
     bass = b / 7 / 255; e = Math.min(1, Math.max(0, (a / 200 / 255 - 0.12) * 1.9));
-    gain.gain.value += ((closed ? 0.1 : 0.25 + 0.75 * level) - gain.gain.value) * 0.08;   // quieter while you rest
+    const baseVolume = closed ? 0.1 : 0.25 + 0.75 * level;
+    // Keep the track playing underneath alerts; recover smoothly after the last one ends.
+    const targetVolume = baseVolume * (notificationAudio.active > 0 ? 0.35 : 1);
+    gain.gain.value += (targetVolume - gain.gain.value) * 0.08;
   } else {
     // no audio (blocked or still loading): a 128 bpm stand-in so the screen still has a pulse
     bass = (t * 2.13) % 1 < 0.15 ? 1 : 0.3; e = 0.6 + 0.3 * Math.sin(t * 0.5);
