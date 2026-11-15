@@ -55,6 +55,7 @@ void main(){
   gl_FragColor = vec4(c, 1.0);
 }`;
 
+import { tune } from './tune.js';
 export function createFx(canvas) {
   const gl = canvas.getContext('webgl', { alpha: false, antialias: false, powerPreference: 'high-performance', desynchronized: true });
   if (!gl) return { active: false, setSource() {}, clear() {}, draw() {} };
@@ -106,7 +107,7 @@ export function createFx(canvas) {
       // Desktop: the blurred, ghosted copy thickens with BAC (about 25% at 0.10, 60-75% at 0.40)
       // and the music pumps it, so the real screen is barely readable at the top.
       const s = Math.max(0, Math.min(1, (level - 0.08) / 0.92));
-      canvas.style.opacity = through ? (s * (0.2 + 0.4 * s + 0.08 * Math.max(0, Math.min(1, m.energy)) + 0.07 * Math.max(0, Math.min(1, m.kick)))).toFixed(3) : '1';
+      canvas.style.opacity = through ? (tune.bg * s * (0.2 + 0.4 * s + 0.08 * Math.max(0, Math.min(1, m.energy)) + 0.07 * Math.max(0, Math.min(1, m.kick)))).toFixed(3) : '1';
       const hide = through && level < 0.08;
       if (hide !== off) { off = hide; canvas.style.visibility = hide ? 'hidden' : ''; }
       if (hide) return;

@@ -3,6 +3,7 @@
 // clips (m.sting) and dice rolls, so no two runs look the same. At BAC 0.40 the screen is
 // barely usable: a small wandering window of clear vision between half-shut eyelids.
 // The DOM is fixed; per frame only transform and opacity change, and nothing takes clicks.
+import { tune } from './tune.js';
 const COLORS = ['#ff16bb', '#00eaff', '#a4ff00', '#a43bff', '#ff9230', '#00ffd0', '#fff600', '#ff2a2a'];
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -46,6 +47,7 @@ export function createHaze(host) {
       const show = amount > 0;
       if (show !== visible) { visible = show; root.style.visibility = show ? 'visible' : 'hidden'; }
       if (!show) return;
+      set(root, 'opacity', tune.bg.toFixed(2));
       const calm = reduced.matches;
       const energy = clamp(m.energy || 0), kick = clamp(m.kick || 0);
       pulse += (Math.max(energy * 0.6, kick) - pulse) * (1 - Math.exp(-dt * 6));
@@ -53,7 +55,7 @@ export function createHaze(host) {
       // A meme clip or a beat throws random junk at the screen.
       if (!calm && (m.sting || (m.beat && Math.random() < amount * 0.8))) {
         flash = Math.min(1, flash + (m.sting ? 0.8 : 0.5)); flashColor = pick(COLORS);
-        if (Math.random() < 0.3 + amount * 0.6) tear(t, amount, 1 + Math.floor(Math.random() * (1 + amount * 3)));
+        if (Math.random() < 0.12 + amount * 0.25) tear(t, amount, 1 + Math.floor(Math.random() * (1 + amount)));
         if (Math.random() < 0.25) { const b = pick(blobs); b.el.style.setProperty('--c', pick(COLORS)); }
       }
       flash *= Math.exp(-dt * 7);
@@ -69,7 +71,7 @@ export function createHaze(host) {
 
       for (const bar of bars) {
         const on = bar.until > t;
-        set(bar.el, 'opacity', on ? (0.35 + 0.5 * amount).toFixed(2) : '0');
+        set(bar.el, 'opacity', on ? (0.1 + 0.15 * amount).toFixed(2) : '0');
         if (on) set(bar.el, 'transform', `translate(${(bar.x + rnd(-2, 2)).toFixed(1)}vw,${bar.y.toFixed(1)}vh) scaleY(${bar.h.toFixed(2)})`);
       }
 

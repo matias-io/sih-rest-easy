@@ -1,6 +1,7 @@
 // Turns one number (level, 0 sober to 1 gone) into what the screen looks like.
 import { hitmarker } from './audio.js';
 import { createClub } from './club.js';
+import { tune } from './tune.js';
 import { createHaze } from './haze.js';
 
 const POPS = ['WOW', '360', 'MLG', 'SAMPLE TEXT', '+100', 'OHHHH', 'NO SLEEP', 'GET REKT', 'BLINK = NOOB', '404 SLEEP'];
@@ -59,11 +60,10 @@ export function createDrunk({ world, fx, mlg, toasts, ads = null }) {
   function render(t, level, m = { energy: 1, kick: 0, mode: 0, seed: 0 }) {
     club.render(t, level, m);
     haze.render(t, level, m);
-    if (desktop) {
-      // Jokes and junk ads grow from faint to nearly solid over the real desktop as BAC climbs.
-      const deco = (0.25 + 0.65 * Math.max(0, Math.min(1, (level - 0.15) / 0.85))).toFixed(2);
-      if (deco !== lastDeco) { lastDeco = deco; if (ads) ads.style.opacity = deco; }
-    }
+    // Foreground (jokes, ads, notifications, photos) follows the viewer's slider; ads also fade in with BAC on desktop.
+    const fg = tune.fg, deco = (desktop ? 0.25 + 0.65 * Math.max(0, Math.min(1, (level - 0.15) / 0.85)) : 1) * fg;
+    const decoKey = deco.toFixed(2) + fg.toFixed(2);
+    if (decoKey !== lastDeco) { lastDeco = decoKey; if (ads) ads.style.opacity = deco.toFixed(2); mlg.style.opacity = toasts.style.opacity = fg.toFixed(2); }
     const amp = 0.3 + 0.7 * m.energy;                  // quiet music, calm screen
     const sway = Math.max(0, level - 0.08) * amp;      // nothing at all for the first few seconds
     const deep = Math.max(0, level - 0.4) / 0.6 * amp; // 0..1 over the second half
@@ -101,6 +101,6 @@ export function createDrunk({ world, fx, mlg, toasts, ads = null }) {
     if (mlgAmt > 0 && (t > nextGag || (m.beat && Math.random() < (desktop ? 0.25 : 0.5)))) { gag(); nextGag = t + (desktop ? rnd(1, 3.2 - mlgAmt * 1.5) : rnd(0.25, 1.1 - mlgAmt * 0.6)); }
   }
 
-  function reset() { club.clear(); haze.clear(); mlg.style.opacity = ''; if (ads) ads.style.opacity = ''; lastDeco = ''; for (const el of effects.keys()) removeEffect(el); toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
+  function reset() { club.clear(); haze.clear(); mlg.style.opacity = ''; if (ads) ads.style.opacity = ''; toasts.style.opacity = ''; lastDeco = ''; for (const el of effects.keys()) removeEffect(el); toasts.style.transform = ''; world.style.transform = ''; world.style.filter = ''; rainbow.style.opacity = 0; rainbow.remove(); }
   return { render, reset, hit, sam, dario };
 }
