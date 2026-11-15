@@ -100,7 +100,7 @@ export function createFeed(box, chatlog) {
     el.onclick = close; setTimeout(close, 7000);
     box.appendChild(el);
     while (box.children.length > 4) box.firstChild.remove();
-    if (chatlog && app === 'slack') { const p = document.createElement('p'), b = document.createElement('b'); b.textContent = who.split(' (')[0]; p.append(b, msg); chatlog.append(p); chatlog.scrollTop = 1e6; }
+    if (chatlog && app === 'slack') { const p = document.createElement('p'), b = document.createElement('b'); b.textContent = who.split(' (')[0]; p.append(b, msg); chatlog.append(p); while (chatlog.children.length > 40) chatlog.firstChild.remove(); chatlog.scrollTop = 1e6; }
     notify(buttons?.includes('Accept') ? 'call' : { slack: 'message', teams: 'message', chatgpt: 'message', outlook: 'email', cal: 'calendar', pager: 'critical', win: 'critical' }[app] || 'system');
   }
   return { push, clear: () => { box.innerHTML = ''; if (chatlog) chatlog.innerHTML = ''; } };

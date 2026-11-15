@@ -30,11 +30,11 @@ app.whenReady().then(async () => {
   win = new BrowserWindow({
     ...display.bounds, show: !SMOKE, frame: false, transparent: true, resizable: false, hasShadow: false,
     skipTaskbar: false, backgroundColor: '#00000000',
-    webPreferences: { preload: require('node:path').join(__dirname, 'preload.js'), backgroundThrottling: false }
+    webPreferences: { autoplayPolicy: 'no-user-gesture-required', preload: require('node:path').join(__dirname, 'preload.js'), backgroundThrottling: false }
   });
   // keep this window out of its own screen capture (REST_EASY_VISIBLE=1 turns that off for screenshots and testing)
   if (process.env.REST_EASY_VISIBLE !== '1') win.setContentProtection(true);
-  win.loadURL(url + '?desktop=1' + (SMOKE ? '&smoke=1' : ''));
+  win.loadURL(url + '?desktop=1' + (SMOKE ? '&smoke=1' : '') + (process.env.REST_EASY_QUERY ? '&' + process.env.REST_EASY_QUERY : ''));   // REST_EASY_QUERY=autorun=60 for a timed test run
 
   // overlay on: cover the desktop, stay above everything, let the mouse and keyboard through.
   // The page asks for the mouse back only while the pointer is over its own controls (the End button).
@@ -69,7 +69,7 @@ app.whenReady().then(async () => {
   ipcMain.handle('quit', () => { clearInterval(keepTop); win.destroy(); app.exit(0); });   // no slow teardown
   ipcMain.handle('hardware', () => { const os = require('node:os'); return { cpu: os.cpus()[0].model.replace(/\s+/g, ' ').trim(), cores: os.cpus().length, ramGb: Math.round(os.totalmem() / 2 ** 30) }; });
 
-  win.webContents.on('console-message', (e) => { if (e.level === 'error' || e.level === 3 || (e.message || '').startsWith('PERF')) console.log('[page] ' + e.message); });
+  win.webContents.on('console-message', (e) => { if (e.level === 'error' || e.level === 3 || /^(PERF|AUTORUN)/.test(e.message || '')) console.log('[page] ' + e.message); if (process.env.REST_EASY_QUERY && (e.message || '').startsWith('AUTORUN done')) setTimeout(() => app.exit(0), 800); });
   if (SMOKE) {
     win.webContents.on('console-message', (e) => { const msg = e.message || ''; if (msg.startsWith('SMOKE ')) { console.log(msg); app.quit(); } });
     setTimeout(() => { console.log('SMOKE timeout'); app.quit(); }, 25000);
