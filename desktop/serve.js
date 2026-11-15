@@ -6,8 +6,12 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 function serve(port = 8770) {
   return new Promise((resolve) => {
     const server = http.createServer((req, res) => {
-      const rel = decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/\.\./g, '');
-      const file = path.join(ROOT, rel === '/' ? 'index.html' : rel);
+      let file;
+      try {
+        const rel = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+        file = path.join(ROOT, rel === '/' ? 'index.html' : rel);
+      } catch { res.writeHead(400); res.end('bad request'); return; }
+      if (!file.startsWith(ROOT)) { res.writeHead(403); res.end('forbidden'); return; }   // stay inside web/
       fs.readFile(file, (err, body) => {
         if (err) { res.writeHead(404); res.end('not found'); return; }
         res.writeHead(200, { 'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
