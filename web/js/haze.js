@@ -78,7 +78,7 @@ export function createHaze(host) {
       focusX += (focusTx - focusX) * (1 - Math.exp(-dt * 0.9)); focusY += (focusTy - focusY) * (1 - Math.exp(-dt * 0.9));
       const hole = 2.3 - 1.6 * heavy + (calm ? 0 : 0.12 * pulse * amount - 0.1 * kick * heavy);
       set(tunnel, 'transform', `translate(${focusX.toFixed(1)}vw,${focusY.toFixed(1)}vh) scale(${hole.toFixed(3)})`);
-      set(tunnel, 'opacity', (Math.min(1, amount * 1.4) * (0.7 + 0.25 * heavy)).toFixed(3));
+      set(tunnel, 'opacity', (Math.min(1, amount * 1.4) * 0.02).toFixed(3));   // barely-there darkness
 
       // Heavy eyelids: a resting droop plus slow, random, deepening blinks.
       if (blinkUntil < 0 && t >= nextBlink && amount > 0.15) {
