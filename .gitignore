@@ -1,4 +1,18 @@
+# dependencies and package-manager caches (a committed .npm-cache once made clones 5x bigger)
 node_modules/
+.npm-cache/
+.npm/
+.pnpm-store/
+.cache/
+*.log
+
+# tool state and local-only work
 .wrangler/
 .playwright-cli/
 .local/
+.env
+.env.*
+
+# OS clutter
+.DS_Store
+Thumbs.db

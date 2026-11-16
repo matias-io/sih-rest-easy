@@ -16,3 +16,11 @@ Read `CLAUDE.md` for the overlay, GPU rendering and rehearsal switches.
 - Notification layouts are parody recreations with brand marks, not screenshots of the apps. Never describe them as exact current native UIs.
 
 Verification: syntax-check changed JS, decode the bundled audio in Chromium, exercise feed tiers and dismissals, check End cleanup, and record visual changes with the motion-capture skill. Keep captures in git-ignored `.local/recordings/`.
+
+## Git workflow
+
+- Work goes through a branch and a pull request into `main`; nobody pushes to `main` directly. Branch names are `type/topic` (`feat/`, `fix/`, `perf/`, `chore/`, `docs/`).
+- Commit subjects are short Conventional Commits (`feat: ...`, `fix: ...`) that say what changed. No "fix cam" or "IDIOT".
+- Never commit `node_modules`, `.npm-cache` or other caches, `.env` files or anything over 10 MB. The `hygiene` check fails a PR that does. Run `git status` before committing.
+- Delete the branch after its PR merges.
+- A clone was 76 MB until 2026-11-16 because an unmerged branch (`copilot-is-an-idiot`) had committed a 60 MB npm cache. That branch was deleted; a bundle of it is in `.local/recovery/` on Matias's laptop. `main` alone clones at about 15 MB, mostly the MediaPipe model, its wasm and the music.
