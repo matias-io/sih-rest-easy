@@ -22,6 +22,11 @@ Music gain is scaled by 0.8 after the BAC/rest curve and notification ducking. S
 
 Verification: syntax-check changed JS, decode the bundled audio in Chromium, exercise feed tiers and dismissals, check End cleanup, and record visual changes with the motion-capture skill. Keep captures in git-ignored `.local/recordings/`.
 
+## Devices and checks
+
+- Phones and tablets (`web/js/device.js`, tested in `device.test.mjs`) get the intro and a share-link button; `setup()` and `start()` refuse to run there, including `?autorun`. Touch laptops still count as computers because they have a fine pointer.
+- Screens scroll when the window is shorter than them (`.screen` has `overflow-y:auto` and auto margins on its first and last child). `node tools/ui-audit.mjs http://127.0.0.1:8770 .local/audit/<name>` screenshots 8 desktop and handheld profiles and flags clipping, sideways scroll, and runs that start on a phone. `npm test` runs the unit tests; CI runs them on every PR.
+
 ## Git workflow
 
 - Work goes through a branch and a pull request into `main`; nobody pushes to `main` directly. Branch names are `type/topic` (`feat/`, `fix/`, `perf/`, `chore/`, `docs/`).
