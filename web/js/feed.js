@@ -29,7 +29,7 @@ const APPS = {
 };
 const AVATAR = ['#c239b3', '#0f6cbd', '#107c10', '#d83b01', '#8764b8', '#038387', '#ca5010'];
 const avatar = (who) => {
-  const name = who.replace(/\s*\(.*$/, '').replace(/ is calling.*$/, ''), init = name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+  const name = who.replace(/\s*\(.*$/, '').replace(/ is (?:still )?calling.*$/, ''), init = name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
   let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
   return `<span class="av" style="background:${AVATAR[h % AVATAR.length]}">${init}</span>`;
 };
@@ -125,9 +125,9 @@ export function createFeed(box, chatlog) {
     el.className = 'toast' + (kind === 'discord' ? ' discord' : '') + (tier === 3 ? ' dank' : '') + (call ? ' call' : kind === 'teams' ? ' teams' : '');
     if (call) {
       // the real Teams call toast: name, "is calling you", avatar, round video / audio / hang-up buttons
-      const caller = who.replace(/ is calling.*$/, '');
-      el.innerHTML = `<span class="x">✕</span><div class="call-brand">${mark}<span>${name}</span></div><div class="who"></div><div class="msg">is calling you</div>${avatar(caller)}<div class="rounds"><i class="vid"><svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/></svg></i><i class="aud"><svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg></i><i class="end"><svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg></i></div>`;
-      el.querySelector('.who').textContent = caller;
+      const caller = who.replace(/ is (?:still )?calling.*$/, ''), verb = who.slice(caller.length + 1) || 'is calling you';
+      el.innerHTML = `<span class="x">✕</span><div class="call-brand">${mark}<span>${name}</span></div><div class="who"></div><div class="msg"></div>${avatar(caller)}<div class="rounds"><i class="vid"><svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M17 10.5V7a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h12a1 1 0 001-1v-3.5l4 4v-11l-4 4z"/></svg></i><i class="aud"><svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg></i><i class="end"><svg viewBox="0 0 24 24" width="19" height="19" fill="#fff"><path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 011 1V20a1 1 0 01-1 1A17 17 0 013 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.45.57 3.57a1 1 0 01-.25 1.02l-2.2 2.2z"/></svg></i></div>`;
+      el.querySelector('.who').textContent = caller; el.querySelector('.msg').textContent = verb;
     } else {
       el.innerHTML = `<div class="th">${mark}<span class="app"></span><span class="x">✕</span></div><div class="row">${kind ? avatar(who) : ''}<div><div class="who"></div><div class="msg"></div></div></div>`;
       el.querySelector('.app').textContent = name; el.querySelector('.who').textContent = who; el.querySelector('.msg').textContent = msg;
