@@ -23,15 +23,23 @@ jobs:
           BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: |
           if [ -z "$BASE" ] || ! git cat-file -e "$BASE^{commit}" 2>/dev/null; then BASE=$(git rev-list --max-parents=0 HEAD | tail -1); fi
-          bad=0
+          bad=0; n=0; rows=""
           while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            n=$((n + 1))
             case "$f" in
               node_modules/*|*/node_modules/*|.npm-cache/*|.npm/*|.pnpm-store/*|.cache/*|.wrangler/*|.local/*)
-                echo "::error file=$f::cache or local-only folder committed"; bad=1 ;;
+                echo "::error file=$f::cache or local-only folder committed"; bad=1
+                rows+="| \`$f\` | cache or local-only folder |"$'\n' ;;
             esac
             if [ -f "$f" ] && [ "$(stat -c%s "$f")" -gt 10485760 ]; then
               echo "::error file=$f::file is over 10 MB"; bad=1
+              rows+="| \`$f\` | $(( $(stat -c%s "$f") / 1048576 )) MB |"$'\n'
             fi
           done < <(git diff --name-only --diff-filter=AM "$BASE" HEAD)
-          [ "$bad" = 0 ] && echo "No caches or oversized files added."
+          if [ "$bad" = 0 ]; then
+            echo "### ✅ $n added or changed files: no caches, nothing over 10 MB" >> "$GITHUB_STEP_SUMMARY"
+          else
+            printf '### ❌ Remove these before merging\n\n| File | Problem |\n|---|---|\n%s' "$rows" >> "$GITHUB_STEP_SUMMARY"
+          fi
           exit "$bad"

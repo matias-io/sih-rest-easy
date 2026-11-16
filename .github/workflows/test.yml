@@ -17,6 +17,20 @@ jobs:
         with:
           node-version: 24
       - name: Syntax check the web modules
-        run: for f in web/js/*.js; do node --input-type=module --check < "$f" || exit 1; done
+        run: for f in web/js/*.js; do node --input-type=module --check < "$f" || { echo "::error file=$f::syntax error"; exit 1; }; done
       - name: Unit tests
-        run: npm test
+        run: |
+          set -o pipefail
+          npm test 2>&1 | tee test.log
+      - name: Summary
+        if: always()
+        run: |
+          pass=$(grep -oP '^ℹ pass \K\d+' test.log 2>/dev/null || echo 0)
+          fail=$(grep -oP '^ℹ fail \K\d+' test.log 2>/dev/null || echo 0)
+          {
+            if [ "$fail" = 0 ] && [ "$pass" -gt 0 ]; then echo "### ✅ $pass unit tests pass"; else echo "### ❌ $fail of $((pass + fail)) unit tests fail"; fi
+            echo
+            echo '| Test | |'
+            echo '|---|---|'
+            grep -E '^(✔|✖) ' test.log 2>/dev/null | sed -E 's/ \([0-9.]+ms\)$//; s/^✔ (.*)/| \1 | ✅ |/; s/^✖ (.*)/| \1 | ❌ |/'
+          } >> "$GITHUB_STEP_SUMMARY"
