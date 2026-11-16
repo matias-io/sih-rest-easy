@@ -1,0 +1,12 @@
+{
+  "file": "sam.jpg",
+  "subjects": [
+    "Sam Altman"
+  ],
+  "source": "https://commons.wikimedia.org/wiki/File:Sam_Altman_TechCrunch_SF_2019_Day_2_Oct_3_(cropped).jpg",
+  "download": "https://commons.wikimedia.org/wiki/Special:FilePath/Sam_Altman_TechCrunch_SF_2019_Day_2_Oct_3_(cropped).jpg?width=640",
+  "credit": "TechCrunch, via Wikimedia Commons",
+  "license": "CC BY 2.0",
+  "modifications": "Resized to 960 px wide by Wikimedia's thumbnailer",
+  "added": "PR #14, 2026-11-15"
+}
