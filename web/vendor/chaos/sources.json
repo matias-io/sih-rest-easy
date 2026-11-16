@@ -211,6 +211,18 @@
       "source": "Deliverables/Rockstar/sfx/mlg-air-horn.mp3",
       "source_sha256": "95beb8827452fab91d38535bbfd359b5e59547e2f98a937cb01032d3dced930c",
       "sha256": "4b60d97113c0b6db3e1abf549c47469a698e9a7097fcbb314bb8121a91492d4b"
+    },
+    {
+      "file": "vine-boom.mp3",
+      "source": "https://www.myinstants.com/media/sounds/vine-boom-sound_UyMFgmN.mp3",
+      "sha256": "c4dadbc0b9cd21b1313ec11845a00d9401bc208ae0f59f54a0282b8cb89d56c2",
+      "note": "Downloaded 2026-11-15. Original MP3, not loudness-normalized; playback capped at five seconds. Ownership/license not established; no open license claimed."
+    },
+    {
+      "file": "crying-cat.mp3",
+      "source": "https://www.myinstants.com/media/sounds/crying-cat.mp3",
+      "sha256": "67e702fc94c8081328d8974d74e135a58d5b497f668de44821a0adaedb92a464",
+      "note": "Downloaded 2026-11-15. Original MP3, not loudness-normalized; playback capped at five seconds. Ownership/license not established; no open license claimed."
     }
   ]
 }

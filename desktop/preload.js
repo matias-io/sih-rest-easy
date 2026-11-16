@@ -2,6 +2,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('restEasyDesktop', {
   captureMode: process.platform === 'darwin' ? 'snapshot' : 'live',
+  screenAccess: (request = false) => ipcRenderer.invoke('screenAccess', request),
+  screenInsets: () => ipcRenderer.invoke('screenInsets'),
   captureHidden: (hidden) => ipcRenderer.invoke('captureHidden', hidden),
   overlay: (on) => ipcRenderer.invoke('overlay', on),   // true: cover the desktop, clicks pass through
   quit: () => ipcRenderer.invoke('quit'),
