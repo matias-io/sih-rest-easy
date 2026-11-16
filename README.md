@@ -1,62 +1,96 @@
+<div align="center">
+
+<img src="docs/media/run.webp" width="800" alt="A work desktop that slowly fills with Teams calls, Slack pings, junk ads and meme captions in shifting colours, then goes dark for a rest and comes back with a 'power nap complete' greeting">
+
 # Rest Easy
 
 Your screen gets drunk the longer you keep your eyes open. The only fix is to close them.
 
-As BAC rises, 35 random meme effects (including the MLG air horn) pile on over the music and notifications. Rest silences the effects; End stops them. Sources and playback tuning: `web/vendor/chaos/README.md`.
+[**Try it at sih.matiass.ca**](https://sih.matiass.ca) · [Devpost](https://devpost.com/software/rest-easy-3xyzf7) · Stupid Ideas Hackathon, Ottawa, 15 Nov 2026
 
-Built at the Stupid Ideas Hackathon, Ottawa, 15 Nov 2026, by Matias Suxo.
-
-**Live:** https://sih.matiass.ca
+</div>
 
 ## How it works
 
-1. A pre-flight check confirms your browser, display, camera and eye tracker. Blink twice to confirm it sees you.
-2. Optionally share your screen. Share the whole screen and your real desktop becomes the backdrop; share a window or tab and it plays live.
-3. Press Start. The page goes fullscreen. While your eyes are open, a "screen BAC" climbs: the picture sways, doubles, warps, and work notifications get stranger until it is full 2012 montage parody.
-4. Close your eyes for a few seconds. A bell tells you the screen is sober again.
+Your webcam watches your eyes. While they are open, a "screen BAC" climbs. The picture starts to sway, then Teams calls, Slack pings, junk ads, meme sounds and surprise CEO cameos pile on, timed to the music. Close your eyes for a few seconds and it drains away. A bell tells you it is safe to look again.
 
-Eye tracking is MediaPipe Face Landmarker (478-point face mesh, blink blendshapes) running on your GPU in the browser. The camera never leaves your device. No synthesized sound: it plays official Android system sounds (Google AOSP, Apache 2.0, in `web/vendor/sounds`), and when run locally, your operating system's own notification sounds. Screen effects run in a WebGL shader. No build step.
+1. **Pre-flight.** The setup screen checks your browser, display, camera and eye tracker. Blink twice so it knows it can see you.
+2. **Start.** Share your screen first if you want your real desktop to be the thing that gets drunk.
+3. **Rest.** Closing your eyes sobers the screen. When you open them you get a greeting with how long you rested and how much BAC you shed.
 
-## Two versions, one app
+<img src="docs/media/setup.jpg" width="720" alt="Pre-flight check with rows for browser, display, hardware, sound, camera, eye tracker, your eyes and your screen, next to the camera preview">
 
-Everything lives in `web/`. The desktop version is a thin Electron shell (`desktop/`) that loads the same page.
+## Web and desktop
 
-| | Web (Chrome) | Desktop (Electron) |
+There is one app, in `web/`. The desktop version is a thin Electron shell in `desktop/` that loads the same page. It exists because a browser tab can't draw over your desktop or let clicks through to the apps underneath.
+
+| | Web | Desktop |
 |---|---|---|
 | Run | `npm run web` | `npm run desktop` |
-| Backdrop | a picture of your screen, a live window or tab, or the built-in desktop | Windows: live desktop; Mac: desktop snapshot taken at Start |
-| Your real apps stay usable | no | yes: clicks and typing pass through |
-| Stop | End button or Esc | End button, Ctrl+Alt+X or F9 (Ctrl+Shift+Q quits) |
+| What gets drunk | a still of your screen, a live window or tab, or a built-in fake desktop | your real desktop: live on Windows, a snapshot taken at Start on a Mac |
+| Your apps stay usable | no | yes, clicks and typing pass through |
+| Stop | End button or Esc | End button, Ctrl+Alt+X or F9. Ctrl+Shift+Q quits |
+| Rest without a camera | hold Space | Cmd+Shift+Space on a Mac, Ctrl+Shift+Space on Windows |
 
-A browser will not let a page draw over your desktop or pass clicks through, which is why the desktop version exists. Windows excludes the overlay from screen capture. Modern macOS includes protected windows in capture, so the Mac app briefly hides itself and takes a snapshot at Start to prevent recursive feedback. While sober, the overlay is transparent and the real desktop shows through. Press Cmd+Shift+Space on Mac (Ctrl+Shift+Space on Windows) to toggle rest while using other apps; Space still works during setup.
+<img align="right" src="docs/media/phone.jpg" width="180" alt="Phone view: Rest Easy runs on a computer, with a button to send the link to a computer">
 
-## Run
+Phones and tablets get the landing page and a button that shares the link, so you can open it on a computer. The run itself needs a webcam, a keyboard and a full screen to wreck.
 
-Use Node 24 LTS (`nvm use` reads `.nvmrc`). Node 26 can silently leave Electron's download only partly extracted.
+<br clear="right">
 
-```
+## Run it
+
+Use Node 24 (`nvm use` reads `.nvmrc`). Node 26 can leave Electron's download half extracted.
+
+```sh
 npm install
 npm run web       # http://127.0.0.1:8770
 npm run desktop   # the overlay on your real desktop
-npm run deploy    # Cloudflare (sih.matiass.ca)
+npm test          # unit tests for device detection, the chaos mixer and the desktop launcher
 ```
 
-With pnpm, run `pnpm install`; Electron's required installer is enabled in `pnpm-workspace.yaml`. For an existing incomplete installation, use Node 24 and run `pnpm rebuild electron`. The desktop launcher also clears inherited `ELECTRON_RUN_AS_NODE` from IDE terminals.
+`pnpm install` works too. If Electron's install is incomplete, run `pnpm rebuild electron` under Node 24.
 
-Speed is set on the setup screen (7 to 35 seconds from sober to gone) or with `?rise=20`. Rehearsal switches (web): `?level=0.8` starts drunk, `?cam=0` skips the camera (hold Space to close your eyes), `]` adds drunkenness. `REST_EASY_VISIBLE=1 npm run desktop` lets screenshots see the overlay (it will also see itself).
+Switches for rehearsing on the web version:
 
-Brand icons in `web/vendor/icons` are from simple-icons (CC0); the brands belong to their owners and are used here as parody.
+| Switch | Effect |
+|---|---|
+| `?rise=20` | seconds from sober to gone (the setup screen offers 7 to 35) |
+| `?level=0.8` | start already drunk |
+| `?cam=0` | skip the camera and hold Space to rest |
+| `]` | add BAC |
+| `?autorun=60&cycle=20` | a timed test run that rests every 20 s and logs a `PERF` line every 5 s |
 
-Notification sounds use the actual Teams ringtone and message recording from Microsoft's installed Teams package, Slack's Knock Brush from Slack's CDN, and Discord's message, ringtone, join and leave recordings from Discord's CDN. PagerDuty alerts use the sound from PagerDuty's Chrome notification extension (Apache 2.0, license bundled). Windows mail, calendar and system recordings cover generic desktop alerts. Exact sources and SHA-256 hashes are in `web/vendor/sounds/sources.json`; the full event mapping is in `web/vendor/sounds/README.md`. The Teams, Slack, Discord and Windows recordings remain the property of their owners; they are not covered by the Android, PagerDuty or icon licenses.
+On desktop, pass the same test run as `REST_EASY_QUERY="autorun=60&cycle=20" npm run desktop`. `REST_EASY_VISIBLE=1` lets screenshots see the overlay, which then also sees itself.
 
-The remaining Android UI sounds in `web/vendor/sounds` are from the Android Open Source Project, Apache License 2.0. Notification banners are parody recreations with brand marks. Dating ads and relationship jokes have been removed.
+## Under the hood
 
-Third-party material:
-- Music: DEAF KEV - Invincible [NCS Release], provided by NoCopyrightSounds (`web/vendor/music`). The screen follows it through an audio analyser: calm in the quiet intro, chaos at the drop.
-- Photo: Sam Altman at TechCrunch Disrupt SF 2019, by TechCrunch, CC BY 2.0, via Wikimedia Commons (`web/vendor/img/sam.jpg`). Parody use.
-- Photo: Dario Amodei at TechCrunch Disrupt 2023, Kimberly White / Getty Images for TechCrunch, [CC BY 2.0](https://creativecommons.org/licenses/by/2.0/), [via Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Dario_Amodei_at_TechCrunch_Disrupt_2023_02_%28close_up_cropped%29.jpg). Existing close-up crop by Nagae Iku, displayed with CSS cropping (`web/vendor/img/dario.jpg`). Parody use; provenance in `web/vendor/img/dario.source.json`.
-- Unused legacy asset: "Sound of American Train Horn Nathan Airchime K5LA" by WeenyBeany, CC BY 4.0, via Wikimedia Commons. Horn playback is disabled.
+- Eye tracking is MediaPipe Face Landmarker, a 478-point face mesh with blink scores, running in a web worker on your GPU. Video never leaves your device.
+- Every screen effect is one WebGL shader. It uploads only new frames and drops resolution as the distortion grows.
+- An audio analyser on the music drives the shader, the club lights and the ad bursts, so the chaos lands on the drop.
+- There is no build step. `web/` is plain HTML, CSS and ES modules.
 
-Timed test run: add `?autorun=60&cycle=20` on the web, or `REST_EASY_QUERY="autorun=60&cycle=20" npm run desktop`. It goes through setup, runs for 60 s closing the eyes every 20 s, and prints a `PERF` line every 5 s (fps, worst frame, tracking time, memory).
+## Credits
 
-Performance: eye inference runs in a worker with one frame in flight (adaptive 24 fps High / 15 fps Light), with a throttled main-thread fallback. Camera capture is capped at 640×480 or 320×240; screen capture at 1920×1080/30 fps. The shader uploads only newly decoded frames and reduces resolution as distortion increases. The built-in desktop uses lighter color effects without fullscreen CSS blur; captured screens retain shader blur. End pauses tracking and clears transient timers/audio. Local vendor assets are cached and streamed with byte-range support. `PERF` reports actual worst-frame duration, including stalls longer than 100 ms.
+Built by [Matias Suxo](https://github.com/matias-io), [Aditya Baindur](https://github.com/Aditya-Baindur) and [Esteban](https://github.com/estebanG2003).
+
+The notification banners are parody recreations, not screenshots. The brands and recordings below belong to their owners and are not covered by any license in this repository.
+
+| Asset | Source | License |
+|---|---|---|
+| Teams ringtone and message | Microsoft's installed Teams package | Microsoft |
+| Slack "Knock Brush" | Slack's CDN | Slack |
+| Discord message, ringtone, join and leave | Discord's CDN | Discord |
+| PagerDuty alert | PagerDuty's Chrome extension | Apache 2.0, license bundled |
+| Windows mail, calendar and system sounds | Windows | Microsoft |
+| Android UI sounds | Android Open Source Project | Apache 2.0 |
+| Meme sound effects | listed in [`web/vendor/chaos/README.md`](web/vendor/chaos/README.md) | no open license |
+| Music: DEAF KEV, "Invincible" | NoCopyrightSounds | NCS terms |
+| Sam Altman photo | TechCrunch, via Wikimedia Commons | CC BY 2.0 |
+| Dario Amodei photo | Kimberly White / Getty Images for TechCrunch, crop by Nagae Iku, via Wikimedia Commons | CC BY 2.0 |
+| Jensen Huang photo | Raysonho, via Wikimedia Commons | CC0 |
+| Lori and Jensen Huang photo | Oregon State University Foundation | all rights reserved |
+| Mark Zuckerberg and Theo Browne photos | not recorded | unknown |
+| Brand icons | simple-icons | CC0 |
+
+Sound sources and SHA-256 hashes are in [`web/vendor/sounds/sources.json`](web/vendor/sounds/sources.json), photo sources in [`web/vendor/img/feed/sources.json`](web/vendor/img/feed/sources.json). An old train-horn recording (WeenyBeany, CC BY 4.0) is still in `web/vendor/sounds` but no longer plays.
