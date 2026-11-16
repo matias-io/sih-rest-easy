@@ -29,7 +29,7 @@ There is one app, in `web/`. The desktop version is a thin Electron shell in `de
 | Run | `npm run web` | `npm run desktop` |
 | What gets drunk | a still of your screen, a live window or tab, or a built-in fake desktop | your real desktop: live on Windows, a snapshot taken at Start on a Mac |
 | Your apps stay usable | no | yes, clicks and typing pass through |
-| Stop | End button or Esc | End button, Ctrl+Alt+X or F9. Ctrl+Shift+Q quits |
+| Stop | End button, or hold Esc | End button, Ctrl+Alt+X or F9. Ctrl+Shift+Q quits |
 | Rest without a camera | hold Space | Cmd+Shift+Space on a Mac, Ctrl+Shift+Space on Windows |
 
 <img align="right" src="docs/media/phone.jpg" width="180" alt="Phone view: Rest Easy runs on a computer, with a button to send the link to a computer">
@@ -90,7 +90,9 @@ The notification banners are parody recreations, not screenshots. The brands and
 | Dario Amodei photo | Kimberly White / Getty Images for TechCrunch, crop by Nagae Iku, via Wikimedia Commons | CC BY 2.0 |
 | Jensen Huang photo | Raysonho, via Wikimedia Commons | CC0 |
 | Lori and Jensen Huang photo | Oregon State University Foundation | all rights reserved |
+| Gym photo on the rest screen | supplied by the team, creator unknown | no license |
+| Detective illustration | Twemoji, © Twitter, Inc. and contributors | CC BY 4.0 |
 | Mark Zuckerberg and Theo Browne photos | not recorded | unknown |
 | Brand icons | simple-icons | CC0 |
 
-Sound sources and SHA-256 hashes are in [`web/vendor/sounds/sources.json`](web/vendor/sounds/sources.json), photo sources in [`web/vendor/img/feed/sources.json`](web/vendor/img/feed/sources.json). An old train-horn recording (WeenyBeany, CC BY 4.0) is still in `web/vendor/sounds` but no longer plays.
+Sound sources and SHA-256 hashes are in [`web/vendor/sounds/sources.json`](web/vendor/sounds/sources.json). Photo sources are in [`web/vendor/img/feed/sources.json`](web/vendor/img/feed/sources.json), [`sam.source.json`](web/vendor/img/sam.source.json) and [`dario.source.json`](web/vendor/img/dario.source.json). `web/vendor/sounds/airhorn.ogg` is an old train-horn recording ("Sound of American Train Horn Nathan Airchime K5LA" by WeenyBeany, CC BY 4.0, via Wikimedia Commons) that no longer plays.
