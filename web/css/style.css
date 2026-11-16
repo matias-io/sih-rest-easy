@@ -7,8 +7,10 @@ kbd { background:#1b2030; border:1px solid #2c3347; border-radius:4px; padding:1
 
 /* ---------- intro / setup / end ---------- */
 .screen { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:18px; padding:max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom)); text-align:center; animation:fadeUp .6s ease both; overflow-y:auto; overscroll-behavior:contain; }
-/* centred when it fits, scrollable from the top when the window is shorter than the screen */
-.screen > :first-child { margin-top:auto; } .screen > :last-child { margin-bottom:auto; }
+/* centred when it fits, scrollable from the top when the window is shorter than the screen.
+   Pseudo-elements, not :first/:last-child, so a hidden last child can't break the centring. */
+.screen::before, .screen::after { content:""; flex:none; }
+.screen::before { margin-top:auto; } .screen::after { margin-bottom:auto; }
 @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } }
 h1 { font-size:clamp(48px,9vw,112px); margin:0; letter-spacing:-.04em; }
 h2 { font-size:clamp(28px,4vw,44px); margin:0; }

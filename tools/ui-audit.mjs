@@ -62,7 +62,9 @@ async function shot(s, file) { const { data } = await s('Page.captureScreenshot'
 const OVERFLOW = `(() => { const sc = [...document.querySelectorAll('.screen')].find((e) => !e.hidden); if (!sc) return null;
   const r = [...sc.querySelectorAll('*')].filter((e) => e.offsetParent).map((e) => e.getBoundingClientRect());
   const clipped = r.filter((b) => b.bottom > innerHeight + 1 || b.top < -1 || b.right > innerWidth + 1 || b.left < -1).length;
-  return { screen: sc.id, clipped, scrollable: sc.scrollHeight > sc.clientHeight + 1 && getComputedStyle(sc).overflowY !== 'hidden', hscroll: document.documentElement.scrollWidth > innerWidth + 1, topVisible: sc.firstElementChild.getBoundingClientRect().top >= -1,
+  const kids = [...sc.children].filter((e) => e.offsetParent).map((e) => e.getBoundingClientRect());
+  const fits = sc.scrollHeight <= sc.clientHeight + 1, above = Math.min(...kids.map((b) => b.top)), below = innerHeight - Math.max(...kids.map((b) => b.bottom));
+  return { screen: sc.id, clipped, centred: !fits || Math.abs(above - below) < 60, scrollable: sc.scrollHeight > sc.clientHeight + 1 && getComputedStyle(sc).overflowY !== 'hidden', hscroll: document.documentElement.scrollWidth > innerWidth + 1, topVisible: sc.firstElementChild.getBoundingClientRect().top >= -1,
   bottomReachable: (() => { const t = sc.scrollTop; sc.scrollTop = 1e6; const ok = [...sc.children].filter((e) => e.offsetParent).every((e) => e.getBoundingClientRect().bottom <= innerHeight + 1); sc.scrollTop = t; return ok; })() }; })()`;
 
 const report = [];
