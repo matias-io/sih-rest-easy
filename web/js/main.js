@@ -7,6 +7,7 @@ import { createAds } from './ads.js';
 import { tune, setTune } from './tune.js';
 import { createChaos } from './chaos.js';
 import { createMascotEyes } from './mascot.js';
+import { isPhoneOrTablet } from './device.js';
 import { initAudio, ding, rest as restSound, wake, probeSystemSounds, stopSounds } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -24,6 +25,18 @@ const desktop = new URLSearchParams(location.search).has('desktop') ? window.res
 if (desktop) { document.documentElement.classList.add('desktop'); document.body.classList.add('desktop'); desktop.onStop(() => (stopRun ? stopRun() : desktop.quit())); }
 desktop?.onRest((closed) => eyes.force(closed));
 
+// Phones and tablets get the landing page and a way to send the link on, never the run itself.
+const handheld = !desktop && isPhoneOrTablet();
+if (handheld) {
+  document.body.classList.add('handheld');
+  $('toSetup').hidden = true; $('mobileBlock').hidden = false;
+  $('sendLink').onclick = async () => {
+    const url = location.origin + location.pathname;
+    try { if (navigator.share) { await navigator.share({ title: 'Rest Easy', url }); return; } await navigator.clipboard.writeText(url); $('sendNote').textContent = 'Link copied. Open it on your computer.'; }
+    catch { $('sendNote').textContent = url; }
+  };
+}
+
 // ---------- setup ----------
 function check(key, cls, text) {
   const li = document.querySelector(`#checks [data-k="${key}"]`);
@@ -32,6 +45,7 @@ function check(key, cls, text) {
 }
 
 async function setup() {
+  if (handheld) return;
   show('setup'); loadMusic(); initAudio();
   eyes.resume?.();
   const brand = navigator.userAgentData?.brands?.find((b) => !/Not/.test(b.brand))?.brand || (/(Firefox|Safari|Chrome)/.exec(navigator.userAgent) || ['browser'])[0];
@@ -196,6 +210,7 @@ async function captureDesktop() {
 }
 
 async function start() {
+  if (handheld) return;
   initAudio(); startMusic();
   const bg = $('bg'), live = $('liveBg'), desk = $('desk');
   bg.className = ''; live.hidden = true; desk.hidden = true; fx.clear();

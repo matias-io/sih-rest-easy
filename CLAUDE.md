@@ -22,6 +22,9 @@ One codebase in `web/` (no build step). `npm run web` serves it on 8770; `npm ru
 - Surprise cameos alternate Dario and Sam. Dario is first, 10–18 seconds into the run once eyes are open and level exceeds 0.3. Their timers are owned by `createDrunk()` and cleared on End.
 - DevTools Chrome throttles rAF in a tab that was navigated in the background; open test runs with a new foreground page.
 
+- Phones and tablets (`web/js/device.js`, tested in `device.test.mjs`) get the intro and a share-link button; `setup()` and `start()` refuse to run there, including `?autorun`. Touch laptops still count as computers because they have a fine pointer.
+- Screens scroll when the window is shorter than them (`.screen` has `overflow-y:auto` and auto margins on its first and last child). `node tools/ui-audit.mjs http://127.0.0.1:8770 .local/audit/<name>` screenshots 8 desktop and handheld profiles and flags clipping, sideways scroll, and runs that start on a phone. `npm test` runs the unit tests; CI runs them on every PR.
+
 ## Git workflow
 
 - Work goes through a branch and a pull request into `main`; nobody pushes to `main` directly. Branch names are `type/topic` (`feat/`, `fix/`, `perf/`, `chore/`, `docs/`).

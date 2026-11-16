@@ -6,7 +6,9 @@ button { font:inherit; cursor:pointer; }
 kbd { background:#1b2030; border:1px solid #2c3347; border-radius:4px; padding:1px 6px; font-size:.9em; }
 
 /* ---------- intro / setup / end ---------- */
-.screen { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:18px; padding:24px; text-align:center; animation:fadeUp .6s ease both; }
+.screen { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:18px; padding:max(24px, env(safe-area-inset-top)) 20px max(24px, env(safe-area-inset-bottom)); text-align:center; animation:fadeUp .6s ease both; overflow-y:auto; overscroll-behavior:contain; }
+/* centred when it fits, scrollable from the top when the window is shorter than the screen */
+.screen > :first-child { margin-top:auto; } .screen > :last-child { margin-bottom:auto; }
 @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } }
 h1 { font-size:clamp(48px,9vw,112px); margin:0; letter-spacing:-.04em; }
 h2 { font-size:clamp(28px,4vw,44px); margin:0; }
@@ -113,7 +115,25 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 #facecam video { width:100%; height:100%; object-fit:cover; transform:scaleX(-1); }
 #faceState { position:absolute; left:0; right:0; bottom:8px; text-align:center; font:700 11px/1 "Segoe UI", system-ui, sans-serif; color:#fff; text-shadow:0 1px 4px #000; z-index:1; }
 .speed { font-size:14px; color:var(--dim); display:flex; gap:10px; align-items:center; }
-.speed select { background:#1b2030; color:var(--ink); border:1px solid #2c3347; border-radius:8px; padding:6px 10px; font:inherit; }
+.speed select { background:#1b2030; color:var(--ink); border:1px solid #2c3347; border-radius:8px; padding:6px 10px; font:inherit; max-width:100%; }
+.mobile-block { max-width:420px; display:flex; flex-direction:column; align-items:center; gap:14px; }
+.mobile-block p { margin:0; color:var(--dim); font-size:17px; line-height:1.5; } .mobile-block b { color:var(--ink); }
+@media (max-width:560px) {
+  .logo { gap:14px; } .eye { width:64px; height:64px; } .eye i { width:26px; height:26px; }
+  .setup-heading h2 { font-size:26px; }
+  .setup-grid { gap:18px; width:100%; }
+  .checks li { grid-template-columns:14px 82px 1fr; gap:8px; padding:10px 12px; font-size:14px; }
+  .speed { flex-direction:column; align-items:stretch; gap:6px; width:100%; max-width:420px; text-align:left; }
+  .speed select { width:100%; }
+  .primary { padding:14px 26px; font-size:17px; }
+  .tag br { display:none; }
+}
+/* phones on their side and very short windows: smaller hero so the content fits */
+@media (max-height:520px) {
+  .screen { gap:12px; }
+  .logo .eye { width:48px; height:48px; } .logo .eye i { width:19px; height:19px; }
+  h1 { font-size:clamp(40px,7vw,64px); }
+}
 #rest { position:absolute; inset:0; z-index:6; background:#000; display:grid; place-items:center; text-align:center; opacity:0; pointer-events:none; transition:opacity .35s; }
 #rest.on { opacity:1; }
 #rest .rest-pic { display:block; width:min(46vw, 420px); max-height:58vh; object-fit:contain; margin:0 auto 18px; border-radius:12px; transform:scale(.85); transition:transform .35s cubic-bezier(.2,1.4,.4,1); }
