@@ -1,7 +1,7 @@
 // Checks the website's "where the run happens" rules in a private Chrome, over raw CDP:
 //   1. Start is locked until a mode is picked; the desktop-app panel opens.
 //   2. Sharing a whole screen is refused (Chrome's auto-picker chooses "Entire screen").
-//   3. Sharing a Chrome tab is accepted and plays live on the stage.
+//   3. Sharing a Chrome tab is accepted and plays live on the stage (a stand-in tab stream; see below).
 //   4. The practice desktop's five tasks can all be done, and the end screen scores them.
 // usage: node tools/share-audit.mjs http://127.0.0.1:8770 .local/audit/share
 import { spawn } from 'node:child_process';
@@ -110,20 +110,29 @@ const screenText = `document.querySelector('#checks [data-k="screen"] span').tex
   await b.close();
 }
 
-// 3: a Chrome tab is accepted and plays live
+// 3: another tab is accepted and plays live. The page gets a stand-in tab stream (a white document drawn on a
+// canvas) because headless Chrome's picker can't be pointed at another tab; brightness proves the stage shows it.
 {
-  const b = await browser(['--auto-select-tab-capture-source-by-title=Quarterly numbers']);
-  const doc = 'data:text/html,' + encodeURIComponent('<title>Quarterly numbers</title><body style="font:22px Georgia;padding:40px;background:#fff"><h1>Quarterly numbers</h1>' + '<p>Revenue, churn and a table nobody reads. </p>'.repeat(40) + '</body>');
-  await b.page(doc, 1440, 900);
-  const p = await b.page(base + '/?cam=0&level=0.55&rise=60');
+  const b = await browser([]);
+  const p = await b.page(base + '/?cam=0&level=0.3&rise=60');
   await p.ev(`(async () => { ${toSetup} })()`);
-  await p.ev(`document.getElementById('modeTab').click()`, true); await sleep(3500);
+  await p.ev(`(() => { navigator.mediaDevices.getDisplayMedia = async () => {
+    const c = document.createElement('canvas'); c.width = 1280; c.height = 800; const x = c.getContext('2d');
+    const paint = () => { x.fillStyle = '#fff'; x.fillRect(0, 0, 1280, 800); x.fillStyle = '#222'; x.font = 'bold 56px Georgia'; x.fillText('Quarterly numbers', 80, 140);
+      x.font = '28px Georgia'; for (let i = 0; i < 14; i++) x.fillText('Revenue, churn and a table nobody reads ' + (2026 - i), 80, 220 + i * 40); };
+    paint(); setInterval(paint, 200);
+    const s = c.captureStream(15), t = s.getVideoTracks()[0], gs = t.getSettings.bind(t);
+    t.getSettings = () => ({ ...gs(), displaySurface: 'browser' }); return s; }; })()`);
+  await p.ev(`document.getElementById('modeTab').click()`, true); await sleep(800);
   const text = await p.ev(screenText);
-  report('Sharing a Chrome tab is accepted and unlocks Start', !(await p.ev(`document.getElementById('start').disabled`)) && /Quarterly numbers|live/.test(text), text.slice(0, 70));
+  report('Sharing another Chrome tab is accepted and unlocks Start', !(await p.ev(`document.getElementById('start').disabled`)) && /Chrome tab, live/.test(text), text.slice(0, 60));
   await p.shot('7-tab-accepted.png');
-  await p.ev(`document.getElementById('start').click()`); await sleep(4000);
-  const live = await p.ev(`(() => { const v = document.getElementById('liveBg'); return !!v.srcObject && v.videoWidth > 0 && document.getElementById('desk').hidden; })()`);
-  report('The shared tab plays live on the stage (no practice desktop)', live);
+  await p.ev(`document.getElementById('start').click()`); await sleep(3500);
+  const bright = await p.ev(`(() => { const v = document.getElementById('liveBg'); const c = document.createElement('canvas'); c.width = 64; c.height = 40; const x = c.getContext('2d'); x.drawImage(v, 0, 0, 64, 40);
+    const d = x.getImageData(0, 0, 64, 40).data; let s = 0; for (let i = 0; i < d.length; i += 4) s += d[i] + d[i + 1] + d[i + 2]; return Math.round(s / (d.length / 4) / 3); })()`);
+  const deskHidden = await p.ev(`document.getElementById('desk').hidden`);
+  report('The shared tab plays live on the stage (no practice desktop)', bright > 180 && deskHidden, 'frame brightness ' + bright + ' of 255');
+  await p.ev(`(() => { for (const el of document.querySelectorAll('#ads > *')) el.remove(); })()`);
   await p.shot('8-tab-stage.png');
   await b.close();
 }
