@@ -1,7 +1,7 @@
 // The notification feed, styled like Windows 11 toasts from the apps a developer actually has open.
 // Four tiers, picked by how drunk the screen is: 0 a normal workday, 1 this week's news leaks in,
 // 2 unhinged, 3 MLG.
-import { notify } from './audio.js';
+import { notifyPopup } from './audio.js';
 
 // Real brand marks (simple-icons, CC0) on each brand's own colour, the way Windows shows them.
 const ICONS = new URL('../vendor/icons/', import.meta.url).href;
@@ -147,7 +147,7 @@ export function createFeed(box, chatlog) {
       dismiss.setAttribute('aria-label', (photo.app ? 'Dismiss image from ' : 'Dismiss photo of ') + photo.title);
       el.querySelector('.x').replaceWith(dismiss);
     }
-    const stopSound = notify(sound || (call ? app === 'discord' ? 'discordCall' : 'teamsCall' : { slack: 'slack', teams: 'teams', discord: 'discord', outlook: 'email', cal: 'calendar', pager: 'pagerduty', win: 'critical' }[app] || 'system'));
+    const stopSound = notifyPopup(sound || (call ? app === 'discord' ? 'discordCall' : 'teamsCall' : { slack: 'slack', teams: 'teams', discord: 'discord', outlook: 'email', cal: 'calendar', pager: 'pagerduty', win: 'critical' }[app] || 'system'), tier);
     let closed = false, exitTimer;
     const dispose = () => { clearTimeout(expiryTimer); clearTimeout(exitTimer); stopSound(); active.delete(el); el.remove(); };
     const close = () => { if (closed) return; closed = true; clearTimeout(expiryTimer); stopSound(); el.classList.add('out'); exitTimer = setTimeout(dispose, 300); };

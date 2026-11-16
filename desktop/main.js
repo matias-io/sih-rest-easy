@@ -47,7 +47,7 @@ app.whenReady().then(async () => {
 
   win = new BrowserWindow({
     ...display.bounds, show: !SMOKE, frame: false, transparent: true, resizable: false, hasShadow: false,
-    skipTaskbar: false, backgroundColor: '#00000000',
+    skipTaskbar: false, backgroundColor: '#00000000', enableLargerThanScreen: true,
     webPreferences: { autoplayPolicy: 'no-user-gesture-required', preload: require('node:path').join(__dirname, 'preload.js'), backgroundThrottling: false }
   });
   // keep this window out of its own screen capture (REST_EASY_VISIBLE=1 turns that off for screenshots and testing)
@@ -57,6 +57,20 @@ app.whenReady().then(async () => {
   // Modern macOS captures protected windows too. Hide ours while taking a single
   // clean frame, then reuse that image for distortion without recursive feedback.
   let restoreAfterCapture = false;
+  ipcMain.handle('screenInsets', () => {
+    const { bounds: b, workArea: w } = screen.getPrimaryDisplay();
+    return { top: Math.max(40, w.y - b.y), bottom: Math.max(24, b.y + b.height - w.y - w.height) };
+  });
+  ipcMain.handle('screenAccess', async (_event, request) => {
+    if (process.platform !== 'darwin') return 'granted';
+    let status = systemPreferences.getMediaAccessStatus('screen');
+    if (request && status !== 'granted') {
+      // Explicit setup action only. Start must never wait for a privacy prompt.
+      try { await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 0, height: 0 } }); } catch {}
+      status = systemPreferences.getMediaAccessStatus('screen');
+    }
+    return status;
+  });
   ipcMain.handle('captureHidden', (_event, hidden) => {
     if (hidden) { restoreAfterCapture = win.isVisible(); win.hide(); }
     else if (restoreAfterCapture && !win.isDestroyed()) { restoreAfterCapture = false; win.show(); }
@@ -72,7 +86,7 @@ app.whenReady().then(async () => {
     win.setIgnoreMouseEvents(on); wasOver = false;
     win.setFocusable(!on);                       // typing goes to the real apps, and Alt+Tab skips us
     win.setSkipTaskbar(on);
-    win.setAlwaysOnTop(on, 'screen-saver');
+    win.setAlwaysOnTop(on, 'screen-saver', process.platform === 'darwin' ? 1 : 0);
     if (on) {
       win.blur();                              // setFocusable(false) alone keeps focus on macOS
       win.setBounds(display.bounds); win.showInactive(); win.moveTop();

@@ -221,3 +221,10 @@ body.desktop #rest { background:#000; }
 .ad-ram .ad-card { background:#101010; color:#7fff00; border-color:#7fff00; }
 .ad-cookie .ad-card { background:#fff3d0; border-color:#76532a; }
 .ad-update .ad-card { background:#0078d4; color:white; border-color:white; }
+
+/* Keep controls inside the usable display while effects cover every edge. */
+body.desktop #hud { top:calc(var(--desktop-top, 40px) + 12px); }
+body.desktop #tune { top:calc(var(--desktop-top, 40px) + 54px); }
+body.desktop .club-sign { bottom:calc(var(--desktop-bottom, 84px) + 24px); }
+body.desktop #toasts { bottom:calc(var(--desktop-bottom, 84px) + 20px); }
+body.desktop #facecam { bottom:calc(var(--desktop-bottom, 84px) + 20px); }

@@ -26,7 +26,7 @@ export function startMusic() {
       ctx = new AudioContext();
       const src = ctx.createMediaElementSource(audio);
       an = ctx.createAnalyser(); an.fftSize = 1024; an.smoothingTimeConstant = 0.5;
-      gain = ctx.createGain(); gain.gain.value = 0.25;
+      gain = ctx.createGain(); gain.gain.value = 0;
       src.connect(an); an.connect(gain); gain.connect(ctx.destination);
       buf = new Uint8Array(an.frequencyBinCount);
     }
@@ -47,7 +47,7 @@ export function music(level, closed, t, dt) {
     const sober = level <= 0.001, ramp = 0.04 + 0.96 * level ** 1.6;
     const baseVolume = sober ? 0 : closed ? Math.min(0.1, ramp) : ramp;
     // Keep the track playing underneath alerts; recover smoothly after the last one ends.
-    const targetVolume = baseVolume * (notificationAudio.active > 0 ? 0.35 : 1);
+    const targetVolume = 0.8 * baseVolume * (notificationAudio.active > 0 ? 0.35 : 1);
     gain.gain.value += (targetVolume - gain.gain.value) * 0.08;
   } else {
     // no audio (blocked or still loading): a 128 bpm stand-in so the screen still has a pulse

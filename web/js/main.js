@@ -38,7 +38,24 @@ async function setup() {
   check('browser', document.fullscreenEnabled ? 'ok' : 'bad', `${brand} on ${navigator.userAgentData?.platform || navigator.platform}`);
   check('display', 'ok', `${screen.width}×${screen.height} at ${devicePixelRatio}x`);
   check('browser', document.fullscreenEnabled ? 'ok' : 'bad', desktop ? `Desktop app (Electron ${(/Electron\/([\d.]+)/.exec(navigator.userAgent) || [])[1] || ''}, Chromium ${(/Chrome\/(\d+)/.exec(navigator.userAgent) || [])[1] || ''})` : null);
-  if (desktop) desktop.stopKeys().then((keys) => check('screen', 'ok', `${desktop.captureMode === 'snapshot' ? 'desktop overlay · screenshot distortion on Mac' : 'live overlay on your real desktop'} · stop: End button${keys.length ? ' or ' + keys.join(' / ') : ''}`));
+  if (desktop) {
+    const insets = await desktop.screenInsets().catch(() => ({ top: 40, bottom: 84 }));
+    document.documentElement.style.setProperty('--desktop-top', `${insets.top}px`);
+    document.documentElement.style.setProperty('--desktop-bottom', `${insets.bottom}px`);
+    const access = await desktop.screenAccess().catch(() => 'unavailable');
+    const keys = await desktop.stopKeys();
+    check('screen', access === 'granted' ? 'ok' : '', `${access === 'granted' ? 'Desktop capture ready' : 'Transparent effects ready; screen distortion optional'} · stop: End button${keys.length ? ' or ' + keys.join(' / ') : ''}`);
+    if (access !== 'granted') {
+      const button = $('share'); button.textContent = 'Enable screen distortion';
+      button.onclick = async () => {
+        button.disabled = true;
+        try {
+          const status = await desktop.screenAccess(true);
+          check('screen', status === 'granted' ? 'ok' : '', status === 'granted' ? 'Screen distortion ready' : 'Screen access not enabled. Start still works with transparent effects. Enable Electron in macOS Screen Recording, then restart the app.');
+        } finally { button.disabled = false; }
+      };
+    }
+  }
   else if (!navigator.mediaDevices?.getDisplayMedia) check('screen', '', 'not supported here, using the built-in desktop');
 
   hardware();
@@ -152,20 +169,28 @@ async function shareScreen() {
 const fx = createFx($('fx'));
 
 async function captureDesktop() {
+  if (await desktop.screenAccess() !== 'granted') throw new Error('Screen access not granted');
   const snapshot = desktop.captureMode === 'snapshot', live = $('liveBg');
+  let timedOut = false, liveReady = false, timeout;
+  const bounded = (promise) => Promise.race([promise, new Promise((_, reject) => {
+    timeout = setTimeout(() => { timedOut = true; reject(new Error('Screen capture timed out')); }, 3000);
+  })]).finally(() => clearTimeout(timeout));
   if (snapshot) await desktop.captureHidden(true);
   try {
-    live.srcObject = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 30, max: 30 }, width: { max: 1920 }, height: { max: 1080 } }, audio: false });
-    await live.play();
-    if (!snapshot) { live.hidden = false; return live; }
+    live.srcObject = await bounded(navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 30, max: 30 }, width: { max: 1920 }, height: { max: 1080 } }, audio: false }).then(stream => {
+      if (timedOut) { stream.getTracks().forEach(track => track.stop()); throw new Error('Late screen capture discarded'); }
+      return stream;
+    }));
+    await bounded(live.play());
+    if (!snapshot) { liveReady = true; live.hidden = false; return live; }
     const still = document.createElement('canvas'); still.width = live.videoWidth; still.height = live.videoHeight;
     if (!still.width || !still.height) throw new Error('No screen capture frame received');
     still.getContext('2d').drawImage(live, 0, 0);
     return still;
   } finally {
-    if (snapshot) {
+    if (!liveReady) {
       live.srcObject?.getTracks().forEach((track) => track.stop()); live.srcObject = null;
-      await desktop.captureHidden(false);
+      if (snapshot) await desktop.captureHidden(false);
     }
   }
 }
