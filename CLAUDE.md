@@ -4,7 +4,7 @@ One codebase in `web/` (no build step). `npm run web` serves it on 8770; `npm ru
 
 - Intro/setup mascot: `web/js/mascot.js` follows the cursor. In pre-flight, `watchEyes()` mirrors the tracker's closed state directly, including the Space fallback. Pupil movement stays independent of eyelid animation.
 
-- Deploys: `npx wrangler deploy` (workers.dev) and `XDG_CONFIG_HOME=~/.wrangler-matiass npx wrangler deploy -c wrangler.matiass.jsonc` (sih.matiass.ca, the account that owns the zone). `wrangler login` needs a real terminal window, not a background shell. GitHub Pages deploys on push to main.
+- Deploys: production is sih.matiass.ca: `XDG_CONFIG_HOME=~/.wrangler-matiass npx wrangler deploy -c wrangler.matiass.jsonc` (the account that owns the zone; set `CLOUDFLARE_ACCOUNT_ID` to that account if wrangler asks which one). Deploy from a clean, up-to-date `main`. `wrangler login` needs a real terminal window, not a background shell. GitHub Pages deploys on push to main. The old `npx wrangler deploy` workers.dev target lost its sign-in and is stale.
 - Testing: `?autorun=60&cycle=20&rise=7` (web, add `&cam=0` for no camera) or `REST_EASY_QUERY="autorun=60&cycle=20" REST_EASY_VISIBLE=1 npm run desktop`. Read the `PERF` lines. `REST_EASY_SMOKE=1` is the hidden self-check.
 - Screen effects are one WebGL shader (`web/js/fx.js`). Do not bring back SVG filters: they ran on the CPU and caused the lag.
 - On desktop the shader canvas is hidden while sober (level < 0.08) so the real screen shows through with no capture delay.
@@ -21,3 +21,11 @@ One codebase in `web/` (no build step). `npm run web` serves it on 8770; `npm ru
 - `web/js/ads.js` + `web/css/ads.css` (junk pop-up ads, written by Codex): `createAds(host)` -> `tick(t, level, energy)`, `clear()`. Capped at 6 ads; beat bursts have a 5-second cooldown. Closing an ad dismisses it.
 - Surprise cameos alternate Dario and Sam. Dario is first, 10–18 seconds into the run once eyes are open and level exceeds 0.3. Their timers are owned by `createDrunk()` and cleared on End.
 - DevTools Chrome throttles rAF in a tab that was navigated in the background; open test runs with a new foreground page.
+
+## Git workflow
+
+- Work goes through a branch and a pull request into `main`; nobody pushes to `main` directly. Branch names are `type/topic` (`feat/`, `fix/`, `perf/`, `chore/`, `docs/`).
+- Commit subjects are short Conventional Commits (`feat: ...`, `fix: ...`) that say what changed. No "fix cam" or "IDIOT".
+- Never commit `node_modules`, `.npm-cache` or other caches, `.env` files or anything over 10 MB. The `hygiene` check fails a PR that does. Run `git status` before committing.
+- Delete the branch after its PR merges.
+- A clone was 76 MB until 2026-11-16 because an unmerged branch (`copilot-is-an-idiot`) had committed a 60 MB npm cache. That branch was deleted; a bundle of it is in `.local/recovery/` on Matias's laptop. `main` alone clones at about 15 MB, mostly the MediaPipe model, its wasm and the music.
