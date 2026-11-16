@@ -22,12 +22,14 @@ Your webcam watches your eyes. While they are open, a "screen BAC" climbs. The p
 
 ## Web and desktop
 
+The desktop app is the way to play: your real desktop gets drunk and you keep working in it. The website asks where the run happens before Start: a Chrome tab (a whole screen or a window is refused, since you couldn't use it) or the practice desktop.
+
 There is one app, in `web/`. The desktop version is a thin Electron shell in `desktop/` that loads the same page. It exists because a browser tab can't draw over your desktop or let clicks through to the apps underneath.
 
 | | Web | Desktop |
 |---|---|---|
 | Run | `npm run web` | `npm run desktop` |
-| What gets drunk | a still of your screen, a live window or tab, or a built-in fake desktop | your real desktop: live on Windows, a snapshot taken at Start on a Mac |
+| What gets drunk | a live Chrome tab you can scroll, or, as a last resort, a practice desktop with a to-do list | your real desktop: live on Windows, a snapshot taken at Start on a Mac |
 | Your apps stay usable | no | yes, clicks and typing pass through |
 | Stop | End button, or hold Esc | End button, Ctrl+Alt+X or F9. Ctrl+Shift+Q quits |
 | Rest without a camera | hold Space | Cmd+Shift+Space on a Mac, Ctrl+Shift+Space on Windows |

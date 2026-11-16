@@ -8,6 +8,7 @@ import { tune, setTune } from './tune.js';
 import { createChaos } from './chaos.js';
 import { createMascotEyes } from './mascot.js';
 import { isPhoneOrTablet } from './device.js';
+import { createWork } from './work.js';
 import { initAudio, ding, rest as restSound, wake, probeSystemSounds, stopSounds } from './audio.js';
 
 const $ = (id) => document.getElementById(id);
@@ -18,6 +19,9 @@ const show = (id) => { for (const s of ['intro', 'setup', 'stage', 'end']) $(s).
 const fmt = (s) => Math.floor(s / 60) + ':' + String(Math.floor(s % 60)).padStart(2, '0');
 
 let eyes = keyboardEyes(), share = null, running = false, stopRun = null, desktopRestKey = null;
+// website only: where the run happens. 'tab' = a shared Chrome tab, 'sim' = the practice desktop.
+// The desktop app is the recommended way; the website asks for one of these before Start.
+let mode = null;
 
 // The desktop app (Electron) loads this same page with ?desktop=1 and a small bridge.
 // There the stage is a click-through window over the real desktop, showing it live.
@@ -70,12 +74,12 @@ async function setup() {
       };
     }
   }
-  else if (!navigator.mediaDevices?.getDisplayMedia) check('screen', '', 'not supported here, using the built-in desktop');
+  else { $('modes').hidden = false; $('share').hidden = true; if (!mode) check('screen', 'wait', 'choose where it happens, below'); }
 
   hardware();
   probeSystemSounds().then((ok) => { const li = document.querySelector('#checks [data-k="sound"]'); li.className = 'ok'; li.querySelector('span').textContent = ok ? 'Teams, Slack and Discord recordings + local system sounds' : 'Teams, Slack and Discord recordings + Windows system sounds'; });
   check('camera', 'wait'); check('tracker', 'wait');
-  $('start').disabled = false; watchEyes();   // keyboard mode works right away; the camera upgrades it
+  updateStart(); watchEyes();   // keyboard mode works right away; the camera upgrades it
   const video = $('camVideo');
   try {
     if (new URLSearchParams(location.search).get('cam') === '0') throw new Error('camera off');   // rehearsal without a camera
@@ -161,23 +165,52 @@ async function hardware() {
   document.querySelector('#checks [data-k="hardware"] span').title = [cpu, gpu].join(' · ');
 }
 
-// ---------- screen share ----------
-// A page cannot draw over the real desktop. What it can do: capture the screen.
-// Whole monitor: take one frame and show that fullscreen (a live view would show itself, forever).
-// A window or another tab: show it live, since our page is not in the picture.
+// ---------- where the run happens (website) ----------
+// A web page cannot draw over the real desktop or pass clicks through to it; the desktop app can,
+// so it is recommended first. On the website only a Chrome tab is accepted: it plays live and you
+// can still scroll it from the stage. A shared screen or window would be a picture you can't use.
+const tabShareSupported = !!navigator.mediaDevices?.getDisplayMedia && 'CaptureController' in window;
+function updateStart() { $('start').disabled = !desktop && !mode; }
+function setMode(next, text, refused = false) {
+  mode = next;
+  $('modeTab').classList.toggle('picked', next === 'tab'); $('modeSim').classList.toggle('picked', next === 'sim');
+  check('screen', next ? 'ok' : refused ? 'bad' : 'wait', text);
+  updateStart();
+}
+function dropShare() { share?.stream.getTracks().forEach((t) => t.stop()); share = null; }
+
 async function shareScreen() {
+  let stream;
   try {
-    const controller = 'CaptureController' in window ? new CaptureController() : undefined;
-    const stream = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: { ideal: 30, max: 30 }, width: { max: 1920 }, height: { max: 1080 } }, audio: false, controller, selfBrowserSurface: 'exclude', monitorTypeSurfaces: 'include' });
-    const track = stream.getVideoTracks()[0], surface = track.getSettings().displaySurface || 'monitor';
-    try { if (surface !== 'monitor') controller?.setFocusBehavior?.('no-focus-change'); } catch {}
+    const controller = new CaptureController();
+    stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { displaySurface: 'browser', frameRate: { ideal: 30, max: 30 }, width: { max: 1920 }, height: { max: 1080 } }, audio: false,
+      controller, preferCurrentTab: false, selfBrowserSurface: 'exclude', surfaceSwitching: 'include', monitorTypeSurfaces: 'exclude' });
+    const track = stream.getVideoTracks()[0], surface = track.getSettings().displaySurface;
+    if (surface !== 'browser') {
+      stream.getTracks().forEach((t) => t.stop());
+      return setMode(null, surface === 'monitor'
+        ? "That was your whole screen. Pick a Chrome tab: a shared screen can't pass your clicks through, so you couldn't use it."
+        : "That was a window. Pick a Chrome tab instead: it's the one you can still scroll during the run.", true);
+    }
+    try { controller.setFocusBehavior?.('no-focus-change'); } catch {}
+    dropShare();
     // do not wait for the first frame: a background tab sends none until it is shown
     const video = document.createElement('video'); video.muted = true; video.srcObject = stream; video.play().catch(() => {});
     share = { stream, surface, video, controller };
-    track.onended = () => { if (!running) { share = null; check('screen', '', 'optional'); } };
-    check('screen', 'ok', surface === 'monitor' ? 'whole screen: your real desktop gets drunk' : surface === 'browser' ? 'a tab, live (you can scroll it)' : 'a window, live');
-  } catch { check('screen', '', 'skipped: using the built-in desktop'); }
+    track.onended = () => { if (!running && share?.stream === stream) { share = null; if (mode === 'tab') setMode(null, 'The tab stopped sharing. Pick another one, or the practice desktop.'); } };
+    setMode('tab', 'A Chrome tab, live: you can scroll it during the run');   // track labels are internal ids, not titles
+  } catch { stream?.getTracks().forEach((t) => t.stop()); if (mode !== 'tab') check('screen', 'wait', 'No tab shared. Pick one, or get the desktop app.'); }
 }
+$('modeApp').onclick = () => { const open = $('getApp').hidden; $('getApp').hidden = !open; $('modeApp').setAttribute('aria-expanded', String(open)); };
+$('copyCmd').onclick = async () => { try { await navigator.clipboard.writeText($('appCmd').textContent); $('copyCmd').textContent = 'Copied'; } catch { $('copyCmd').textContent = 'Select and copy'; } };
+$('modeTab').onclick = shareScreen;
+if (!tabShareSupported) { $('modeTab').disabled = true; $('modeTabNote').textContent = 'Needs Chrome or Edge. Use the desktop app instead.'; }
+$('modeSim').onclick = () => { dropShare(); setMode('sim', 'Practice desktop (last resort): a to-do list to get through while it gets drunk'); };
+
+const work = createWork({ list: $('todo'), score: $('todoScore'), notes: $('winNotes').querySelector('textarea'), chatform: $('chatform'), toasts: $('toasts') });
+let pointer = null;
+addEventListener('pointermove', (e) => { pointer = { x: e.clientX, y: e.clientY }; }, { passive: true });
 
 // ---------- the run ----------
 const fx = createFx($('fx'));
@@ -210,7 +243,7 @@ async function captureDesktop() {
 }
 
 async function start() {
-  if (handheld) return;
+  if (handheld || (!desktop && !mode)) return;
   initAudio(); startMusic();
   const bg = $('bg'), live = $('liveBg'), desk = $('desk');
   bg.className = ''; live.hidden = true; desk.hidden = true; fx.clear();
@@ -223,22 +256,13 @@ async function start() {
     show('stage'); desktopRestKey = (await desktop.overlay(true)).restKey;
     return run();
   }
-  if (share?.surface === 'monitor' && share.video.videoWidth) {
-    // show the built-in desktop in the page for a moment so the frame we take has "work" in it,
-    // under your real tab strip and above your real taskbar
-    bg.className = 'wall'; desk.hidden = false; show('stage');
-    await new Promise((r) => setTimeout(r, 450));
-    const v = share.video, c = document.createElement('canvas'); c.width = v.videoWidth; c.height = v.videoHeight;
-    c.getContext('2d').drawImage(v, 0, 0);
-    share.stream.getTracks().forEach((t) => t.stop()); share = null;
-    bg.className = ''; desk.hidden = true; fx.setSource(c);
-  } else if (share) {
+  if (mode === 'tab' && share) {
     live.srcObject = share.stream; live.hidden = false; live.play().catch(() => {});
     fx.setSource(live, { contain: true });
     try { await share.controller?.forwardWheel?.($('fx')); } catch {}   // Chrome: scroll the shared tab from here
     show('stage');
   } else {
-    bg.className = 'wall'; desk.hidden = false; show('stage');
+    bg.className = 'wall'; desk.hidden = false; work.reset(); show('stage');
   }
   try { await document.documentElement.requestFullscreen({ navigationUI: 'hide' }); navigator.keyboard?.lock?.(['Escape']).catch(() => {}); } catch {}
   run();
@@ -292,6 +316,8 @@ function run() {
     $('liveBg').srcObject?.getTracks().forEach((x) => x.stop()); $('liveBg').srcObject = null; fx.clear(); share = null;
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     $('endTime').textContent = fmt(total); $('endBac').textContent = (peak * 0.4).toFixed(2); $('endRests').textContent = rests;
+    $('endWork').hidden = desktop || mode !== 'sim'; $('endWork').textContent = `Work done: ${work.progress.count} of 5 tasks.`;
+    if (!desktop && mode === 'tab') setMode(null, 'The tab share ended with the run. Pick a tab again, or the practice desktop.');
     show('end');
   }
 
@@ -329,6 +355,7 @@ function run() {
     const m = music(level, closed, t, dt);
     m.sting = chaos.tick(t, level, closed);   // a meme clip just started: the overlays flinch
     drunk.render(t, level, m);
+    if (!desktop && mode === 'sim') work.tick(level, pointer);
     ads.tick(t, level, m.energy);
     if (!closed && level > 0.3 && t > cameoAt) {
       drunk[nextCameo]();
@@ -354,7 +381,6 @@ function run() {
 
 // ---------- wiring ----------
 $('toSetup').onclick = setup;
-$('share').onclick = shareScreen;
 $('start').onclick = start;
 $('again').onclick = () => { $('setup').querySelector('.cam').prepend($('camVideo')); show('setup'); eyes.resume?.(); watchEyes(); };
 $('quality').value = localStorage.getItem('quality') || 'high';
@@ -383,6 +409,7 @@ $('chatform').onsubmit = (e) => {
 
 // test hook: ?autorun=60 goes through setup, runs for 60 s, ends. ?cycle=8 closes the eyes for 3 s every 8 s.
 const auto = parseFloat(params.get('autorun'));
+if (auto) { if (!desktop) mode = 'sim'; } 
 if (auto) setup().then(start).then(() => {
   const cyc = parseFloat(params.get('cycle'));
   const iv = cyc ? setInterval(() => { eyes.force(true); setTimeout(() => eyes.force(false), 3000); }, cyc * 1000) : 0;
