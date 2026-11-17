@@ -46,16 +46,16 @@
   <div id="modes" class="modes" hidden>
     <p class="modes-q">Where should the drunk screen happen?</p>
     <div class="mode-row">
-      <button id="modeApp" class="mode best" type="button" aria-expanded="false" aria-controls="getApp"><span class="rank">Best</span><b>Desktop app</b><span>Your real desktop gets drunk while you keep working in it. Clicks and typing pass straight through.</span></button>
-      <button id="modeTab" class="mode" type="button"><span class="rank">Good</span><b>Share a Chrome tab</b><span id="modeTabNote">Pick a tab with real work in it. It plays live and you can still scroll it.</span></button>
+      <button id="modeApp" class="mode" type="button" aria-expanded="false" aria-controls="getApp"><b>Desktop app <span class="best-tag">Best experience</span></b><span>Your real desktop gets drunk while you keep using it.</span><small class="tab-only">Supports the full experience. Requires installation.</small></button>
+      <button id="modeTab" class="mode" type="button"><b>Share a Chrome tab</b><span id="modeTabNote">A live tab you can still scroll.</span><small class="tab-only">Tabs only. Windows and screens unsupported.</small></button>
     </div>
     <div id="getApp" class="get-app" hidden>
-      <p><b>Run the desktop app</b> on Windows or a Mac with Node 24:</p>
+      <p><b>Run the desktop app</b> on Windows or a Mac with Node 24:<span class="trust"> Linux starts, but its screen capture isn't tested yet.</span></p>
       <pre id="appCmd">git clone https://github.com/matias-io/sih-rest-easy
 cd sih-rest-easy
 npm install
 npm run desktop</pre>
-      <button id="copyCmd" class="mini" type="button">Copy commands</button>
+      <div class="get-app-foot"><button id="copyCmd" class="mini" type="button">Copy commands</button><span class="trust">Fully open source. <a href="https://github.com/matias-io/sih-rest-easy" target="_blank" rel="noopener">Read the code</a>, or have your own AI agent audit it before you run it.</span></div>
     </div>
     <button id="modeSim" class="mode-min" type="button">No tab to share? Use the practice desktop</button>
   </div>
