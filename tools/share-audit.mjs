@@ -137,6 +137,26 @@ const screenText = `document.querySelector('#checks [data-k="screen"] span').tex
   await b.close();
 }
 
+// 4: browsers without tab sharing (Firefox, Safari): the tab card is disabled and says why; the practice desktop still works
+{
+  const b = await browser([]);
+  const { targetId } = await b.send('Target.createTarget', { url: 'about:blank' });
+  const { sessionId } = await b.send('Target.attachToTarget', { targetId, flatten: true });
+  const s = (m, p) => b.send(m, p, sessionId);
+  await s('Page.enable'); await s('Runtime.enable');
+  await s('Emulation.setDeviceMetricsOverride', { width: 1440, height: 900, deviceScaleFactor: 1, mobile: false });
+  await s('Page.addScriptToEvaluateOnNewDocument', { source: 'delete window.CaptureController;' });
+  await s('Page.navigate', { url: base + '/?cam=0' }); await sleep(2200);
+  const ev = async (expr) => (await s('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true })).result.value;
+  await ev(`(async () => { ${toSetup} })()`);
+  const card = await ev(`({ disabled: document.getElementById('modeTab').disabled, note: document.getElementById('modeTabNote').textContent })`);
+  report('Without tab sharing (Firefox, Safari) the tab card is disabled and says why', card.disabled && /Chrome or Edge/.test(card.note), card.note);
+  await ev(`document.getElementById('modeSim').click()`); await sleep(200);
+  report('Without tab sharing the practice desktop still unlocks Start', await ev(`!document.getElementById('start').disabled`));
+  const { data } = await s('Page.captureScreenshot', { format: 'png' }); writeFileSync(join(out, '9-no-tab-share.png'), Buffer.from(data, 'base64'));
+  await b.close();
+}
+
 writeFileSync(join(out, 'results.json'), JSON.stringify(results, null, 1));
 const failed = results.filter((r) => !r.pass).length;
 console.log(`${results.length - failed} of ${results.length} checks pass`);

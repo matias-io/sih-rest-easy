@@ -134,8 +134,10 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 .get-app { text-align:left; background:#12151e; border:1px solid var(--accent); border-radius:12px; padding:12px 16px; }
 .get-app p { margin:0 0 8px; color:var(--dim); } .get-app b { color:var(--ink); }
 .get-app pre { margin:0 0 8px; background:#0b0d12; border-radius:8px; padding:10px 12px; font-size:13px; overflow:auto; }
-.linkish { align-self:center; background:none; border:0; color:var(--dim); text-decoration:underline; font-size:13px; padding:4px; }
-.linkish.picked { color:var(--ok); }
+/* last resort: a real button, but small and quiet next to the two cards */
+.mode-min { align-self:center; background:#12151e; border:1px solid #232838; border-radius:999px; color:var(--dim); font-size:13px; padding:7px 16px; }
+.mode-min:hover { color:var(--ink); border-color:#2c3347; }
+.mode-min.picked { color:var(--ok); border-color:var(--ok); }
 @media (max-width:640px) { .mode-row { grid-template-columns:1fr; } }
 
 /* practice desktop: today's to-do list */
