@@ -30,7 +30,7 @@ Verification: syntax-check changed JS, decode the bundled audio in Chromium, exe
 - Website modes (`mode` in `web/js/main.js`): Start stays locked until the visitor shares a Chrome tab or picks the practice desktop. A shared screen or window is refused and stopped. The desktop app is recommended first and skips the chooser. `node tools/share-audit.mjs http://127.0.0.1:8770 .local/audit/share` checks all of this in a private Chrome (11 checks). The practice desktop's to-do list is `web/js/work.js`.
 - `REST_EASY_VISIBLE=1` turns off capture protection, so the overlay records itself: the facecam leaves a square ghost in the drunk background. Judge visuals from a normal run, not that mode.
 
-- Linux desktop app: uses the Mac's snapshot capture (Linux can't hide the overlay from its own capture). Tested under WSL on 2026-11-16: it starts and the bridge loads, but WSLg has no desktop to capture (black frames), so capture on a real X11 or Wayland desktop is unverified. WSL test recipe without sudo: temporary Node 24 tarball in /tmp, `npm ci` on a copy of the repo, `apt-get download libnss3 libnspr4 libasound2t64` and `dpkg-deb -x` them into /tmp, then `LD_LIBRARY_PATH=... REST_EASY_SMOKE=1 electron . --no-sandbox`.
+- Linux desktop app: uses the Mac's snapshot capture (Linux can't hide the overlay from its own capture). Verified on X11 with `tools/linux-x11/check.sh` (Docker, Xvfb, software WebGL): capture finds a test window at its exact position. Wayland (PipeWire capture) is untested. WSL can't test capture: WSLg has no desktop to capture.
 
 ## Git workflow
 

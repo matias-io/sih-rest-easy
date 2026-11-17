@@ -29,7 +29,7 @@ There is one app, in `web/`. The desktop version is a thin Electron shell in `de
 | | Web | Desktop |
 |---|---|---|
 | Run | `npm run web` | `npm run desktop` |
-| What gets drunk | a live Chrome tab you can scroll, or, as a last resort, a practice desktop with a to-do list | your real desktop: live on Windows, a snapshot taken at Start on a Mac |
+| What gets drunk | a live Chrome tab you can scroll, or, as a last resort, a practice desktop with a to-do list | your real desktop: live on Windows, a snapshot taken at Start on a Mac or Linux |
 | Your apps stay usable | no | yes, clicks and typing pass through |
 | Stop | End button, or hold Esc | End button, Ctrl+Alt+X or F9. Ctrl+Shift+Q quits |
 | Rest without a camera | hold Space | Cmd+Shift+Space on a Mac, Ctrl+Shift+Space on Windows |
