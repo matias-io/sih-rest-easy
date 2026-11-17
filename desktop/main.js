@@ -1,7 +1,7 @@
 // Desktop shell for the shared web app in ../web.
 // What it adds over Chrome: one window that covers the whole desktop, stays above everything,
 // lets clicks and keys pass through to your real apps. Windows can exclude the overlay
-// from live capture; macOS uses a clean snapshot because ScreenCaptureKit includes it.
+// from live capture; macOS and Linux use a clean snapshot because their capture includes it.
 const { app, BrowserWindow, desktopCapturer, globalShortcut, ipcMain, screen, session, systemPreferences } = require("electron");
 const { serve } = require('./serve');
 

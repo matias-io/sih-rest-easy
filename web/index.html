@@ -43,6 +43,22 @@
       <div class="meter"><i id="eyeMeter"></i></div>
     </div>
   </div>
+  <div id="modes" class="modes" hidden>
+    <p class="modes-q">Where should the drunk screen happen?</p>
+    <div class="mode-row">
+      <button id="modeApp" class="mode" type="button" aria-expanded="false" aria-controls="getApp"><b>Desktop app <span class="best-tag">Best experience</span></b><span>Your real desktop gets drunk while you keep using it.</span><small class="tab-only">Supports the full experience. Requires installation.</small></button>
+      <button id="modeTab" class="mode" type="button"><b>Share a Chrome tab</b><span id="modeTabNote">A live tab you can still scroll.</span><small class="tab-only">Tabs only. Windows and screens unsupported.</small></button>
+    </div>
+    <div id="getApp" class="get-app" hidden>
+      <p><b>Run the desktop app</b> on Windows, a Mac or Linux with Node 24:</p>
+      <pre id="appCmd">git clone https://github.com/matias-io/sih-rest-easy
+cd sih-rest-easy
+npm install
+npm run desktop</pre>
+      <div class="get-app-foot"><button id="copyCmd" class="mini" type="button">Copy commands</button><span class="trust">Fully open source. <a href="https://github.com/matias-io/sih-rest-easy" target="_blank" rel="noopener">Read the code</a>, or have your own AI agent audit it before you run it.</span></div>
+    </div>
+    <button id="modeSim" class="mode-min" type="button">No tab to share? Use the practice desktop</button>
+  </div>
   <label class="speed">Eye tracking <select id="quality"><option value="high" selected>High: adaptive tracking, 480p, mesh + eyelid geometry</option><option value="light">Light: reduced tracking, 240p</option></select></label>
   <label class="speed">Speed <select id="speed"><option value="7">Demo: gone in 7 s</option><option value="12" selected>Fast: 12 s</option><option value="20">Normal: 20 s</option><option value="35">Slow: 35 s</option></select></label>
   <button id="start" class="primary" disabled>Start working</button>
@@ -56,7 +72,7 @@
     <video id="liveBg" playsinline muted hidden></video>
     <canvas id="fx" hidden></canvas>
     <div id="desk" hidden>
-      <div class="win" id="winNotes" style="left:7%;top:9%;width:46%;height:62%">
+      <div class="win" id="winNotes" style="left:7%;top:7%;width:46%;height:52%">
         <header><span class="dots"><i></i><i></i><i></i></span>Q4 Synergy Report (FINAL v7 real).docx</header>
         <textarea spellcheck="false">Q4 Synergy Report
 
@@ -69,6 +85,10 @@ We are aligned. We have never been more aligned.
 - Blink (overdue)
 
 Type here. Try to get some work done.</textarea>
+      </div>
+      <div class="win todo" id="winTodo" style="left:7%;top:62%;width:46%;height:28%">
+        <header><span class="dots"><i></i><i></i><i></i></span>Today<span id="todoScore" class="todo-score"></span></header>
+        <ul id="todo" class="todo-list"></ul>
       </div>
       <div class="win chat" id="winChat" style="left:57%;top:16%;width:36%;height:58%">
         <header><span class="dots"><i></i><i></i><i></i></span># general</header>
@@ -92,6 +112,7 @@ Type here. Try to get some work done.</textarea>
 <section id="end" class="screen" hidden>
   <h2>You survived <span id="endTime">0:00</span> awake.</h2>
   <p class="tag">Peak screen BAC <span id="endBac">0.00</span>. Rests taken: <span id="endRests">0</span>.</p>
+  <p class="tag" id="endWork" hidden></p>
   <button id="again" class="primary">Go again</button>
   <p class="credit" id="credit"></p>
 </section>

@@ -1,7 +1,7 @@
 // The only bridge between the shared web app and the desktop shell.
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('restEasyDesktop', {
-  captureMode: process.platform === 'darwin' ? 'snapshot' : 'live',
+  captureMode: process.platform === 'win32' ? 'live' : 'snapshot',   // only Windows can hide the overlay from its own capture
   screenAccess: (request = false) => ipcRenderer.invoke('screenAccess', request),
   screenInsets: () => ipcRenderer.invoke('screenInsets'),
   captureHidden: (hidden) => ipcRenderer.invoke('captureHidden', hidden),

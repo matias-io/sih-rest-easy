@@ -25,6 +25,11 @@ One codebase in `web/` (no build step). `npm run web` serves it on 8770; `npm ru
 - Phones and tablets (`web/js/device.js`, tested in `device.test.mjs`) get the intro and a share-link button; `setup()` and `start()` refuse to run there, including `?autorun`. Touch laptops still count as computers because they have a fine pointer.
 - Screens scroll when the window is shorter than them (`.screen` has `overflow-y:auto` and auto margins on its first and last child). `node tools/ui-audit.mjs http://127.0.0.1:8770 .local/audit/<name>` screenshots 8 desktop and handheld profiles and flags clipping, sideways scroll, and runs that start on a phone. `npm test` runs the unit tests; CI runs them on every PR.
 
+- Website modes (`mode` in `web/js/main.js`): Start stays locked until the visitor shares a Chrome tab or picks the practice desktop. A shared screen or window is refused and stopped. The desktop app is recommended first and skips the chooser. `node tools/share-audit.mjs http://127.0.0.1:8770 .local/audit/share` checks all of this in a private Chrome (11 checks). The practice desktop's to-do list is `web/js/work.js`.
+- `REST_EASY_VISIBLE=1` turns off capture protection, so the overlay records itself: the facecam leaves a square ghost in the drunk background. Judge visuals from a normal run, not that mode.
+
+- Linux desktop app: uses the Mac's snapshot capture (Linux can't hide the overlay from its own capture). Verified on X11 with `tools/linux-x11/check.sh` (Docker, Xvfb, software WebGL): capture finds a test window at its exact position. Wayland (PipeWire capture) is untested. WSL can't test capture: WSLg has no desktop to capture.
+
 ## Git workflow
 
 - Work goes through a branch and a pull request into `main`; nobody pushes to `main` directly. Branch names are `type/topic` (`feat/`, `fix/`, `perf/`, `chore/`, `docs/`).

@@ -8,7 +8,7 @@
     "web": "node desktop/serve.js",
     "desktop": "node desktop/launch.js",
     "deploy": "wrangler deploy",
-    "test": "node --test web/js/device.test.mjs web/js/chaos.test.mjs desktop/launch.test.js"
+    "test": "node --test web/js/device.test.mjs web/js/work.test.mjs web/js/chaos.test.mjs desktop/launch.test.js"
   },
   "devDependencies": {
     "electron": "^39.0.0",

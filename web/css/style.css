@@ -118,6 +118,43 @@ h2 { font-size:clamp(28px,4vw,44px); margin:0; }
 #faceState { position:absolute; left:0; right:0; bottom:8px; text-align:center; font:700 11px/1 "Segoe UI", system-ui, sans-serif; color:#fff; text-shadow:0 1px 4px #000; z-index:1; }
 .speed { font-size:14px; color:var(--dim); display:flex; gap:10px; align-items:center; }
 .speed select { background:#1b2030; color:var(--ink); border:1px solid #2c3347; border-radius:8px; padding:6px 10px; font:inherit; max-width:100%; }
+/* where the run happens: desktop app first, a Chrome tab second, the practice desktop last */
+.modes { width:min(780px,100%); display:flex; flex-direction:column; gap:10px; }
+.modes-q { margin:0; font-weight:600; }
+.mode-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.mode { text-align:left; display:flex; flex-direction:column; gap:2px; padding:10px 14px; border-radius:10px; background:#12151e; border:1px solid #2c3347; color:var(--ink); font-size:14px; }
+.mode b + span { color:var(--dim); line-height:1.4; }
+.mode b { font-size:15px; display:flex; align-items:center; gap:8px; }
+.best-tag { font-size:11px; font-weight:600; color:var(--accent); }
+.mode:hover:not(:disabled) { border-color:var(--accent); }
+.mode.picked { border-color:var(--ok); box-shadow:0 0 0 1px var(--ok) inset; }
+.mode:disabled { opacity:.5; cursor:not-allowed; }
+.get-app { text-align:left; background:#12151e; border:1px solid var(--accent); border-radius:12px; padding:12px 16px; }
+.get-app p { margin:0 0 8px; color:var(--dim); } .get-app b { color:var(--ink); }
+.get-app-foot { display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+.get-app-foot .mini { margin-left:0; }
+.trust { font-size:12px; color:#5b6378; } .trust a { color:inherit; }
+.mode .tab-only { font-size:11px; color:#5b6378; }
+.get-app pre { margin:0 0 8px; background:#0b0d12; border-radius:8px; padding:10px 12px; font-size:13px; overflow:auto; }
+/* last resort: a real button, but small and quiet next to the two cards */
+.mode-min { align-self:center; background:#12151e; border:1px solid #232838; border-radius:999px; color:var(--dim); font-size:13px; padding:7px 16px; }
+.mode-min:hover { color:var(--ink); border-color:#2c3347; }
+.mode-min.picked { color:var(--ok); border-color:var(--ok); }
+@media (max-width:640px) { .mode-row { grid-template-columns:1fr; } }
+
+/* practice desktop: today's to-do list */
+.todo { font:13px/1.35 "Segoe UI", system-ui, sans-serif; }
+.todo-score { margin-left:auto; font-weight:600; color:#5b6378; }
+.todo-list { list-style:none; margin:0; padding:6px 12px; overflow:auto; display:flex; flex-direction:column; gap:2px; }
+.todo-list li { display:flex; align-items:center; gap:9px; padding:4px 2px; }
+.todo-list .box { width:15px; height:15px; border:2px solid #9aa3b5; border-radius:4px; flex:none; display:grid; place-items:center; }
+.todo-list li.done { color:#8a92a3; text-decoration:line-through; }
+.todo-list li.done .box { background:#28c941; border-color:#28c941; }
+.todo-list li.done .box::after { content:"✓"; color:#fff; font-size:11px; line-height:1; }
+.todo-list li.just .box { animation:tick .5s ease; }
+@keyframes tick { 40% { transform:scale(1.5); } }
+.todo-list .approve { margin-left:auto; background:#2da44e; color:#fff; border:0; border-radius:6px; padding:3px 12px; font-size:12px; font-weight:600; transition:transform .12s ease-out; }
+
 .mobile-block { max-width:420px; display:flex; flex-direction:column; align-items:center; gap:14px; }
 .mobile-block p { margin:0; color:var(--dim); font-size:17px; line-height:1.5; } .mobile-block b { color:var(--ink); }
 @media (max-width:560px) {
